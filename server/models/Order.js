@@ -4,9 +4,9 @@ const mongoose = require("mongoose");
 const orderItemSchema = new mongoose.Schema(
   {
     perfume:  { type: mongoose.Schema.Types.ObjectId, ref: "Perfume", required: true },
-    name:     { type: String, required: true },  // snapshot at time of purchase
+    name:     { type: String, required: true },
     brand:    { type: String, required: true },
-    image:    { type: String },                  // main image URL snapshot
+    image:    { type: String },
 
     section:  {
       type: String,
@@ -14,17 +14,15 @@ const orderItemSchema = new mongoose.Schema(
       required: true,
     },
 
-    // For taqseem items — which size was ordered
-    size_ml:  { type: Number },                  // null for full bottle
+    size_ml:  { type: Number },   // null for full bottle
 
     quantity: { type: Number, required: true, min: 1 },
-    price:    { type: Number, required: true },  // unit price at time of purchase
+    price:    { type: Number, required: true },
   },
   { _id: true }
 );
 
 // ── Shipping address snapshot ─────────────────────────────────────────────────
-// Copied from user's address at checkout — independent of future address changes
 const shippingAddressSchema = new mongoose.Schema(
   {
     city:   { type: String, required: true },
@@ -38,42 +36,45 @@ const shippingAddressSchema = new mongoose.Schema(
 // ── Main Order schema ─────────────────────────────────────────────────────────
 const orderSchema = new mongoose.Schema(
   {
-    // ── Who placed it ─────────────────────────────────────────────────────────
+    // ── Who placed it (null for guests) ───────────────────────────────────────
     user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+      type:    mongoose.Schema.Types.ObjectId,
+      ref:     "User",
+      default: null,           // ← guests have no account
     },
+
+    // ── Guest info (only set when user === null) ───────────────────────────────
+    guestName:  { type: String },
+    guestPhone: { type: String },
 
     // ── What was ordered ──────────────────────────────────────────────────────
     items: {
-      type: [orderItemSchema],
+      type:     [orderItemSchema],
       required: true,
     },
 
     // ── Contact for this order ────────────────────────────────────────────────
     phone: {
-      type: String,
+      type:     String,
       required: true,
     },
 
     shippingAddress: {
-      type: shippingAddressSchema,
+      type:     shippingAddressSchema,
       required: true,
     },
 
     // ── Pricing breakdown ─────────────────────────────────────────────────────
-    itemsPrice:    { type: Number, required: true },  // subtotal
+    itemsPrice:    { type: Number, required: true },
     shippingPrice: { type: Number, required: true, default: 0 },
-    discount:      { type: Number, default: 0 },      // promo code discount
-    totalPrice:    { type: Number, required: true },  // final amount
-
-    promoCode:     { type: String },                  // code used if any
+    discount:      { type: Number, default: 0 },
+    totalPrice:    { type: Number, required: true },
+    promoCode:     { type: String },
 
     // ── Payment ───────────────────────────────────────────────────────────────
     paymentMethod: {
-      type: String,
-      enum: ["cash_on_delivery", "online"],
+      type:    String,
+      enum:    ["cash_on_delivery", "online"],
       default: "cash_on_delivery",
     },
 
@@ -84,30 +85,27 @@ const orderSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
-        "pending",      // just placed, awaiting confirmation
-        "confirmed",    // admin confirmed
-        "processing",   // being prepared
-        "shipped",      // on the way
-        "delivered",    // received by customer
-        "cancelled",    // cancelled by user or admin
+        "pending",
+        "confirmed",
+        "processing",
+        "shipped",
+        "delivered",
+        "cancelled",
       ],
       default: "pending",
     },
 
-    // Admin notes — internal only
-    adminNotes: { type: String, select: false },
-
-    deliveredAt: { type: Date },
-    cancelledAt: { type: Date },
-    cancelReason:{ type: String },
+    adminNotes:   { type: String, select: false },
+    deliveredAt:  { type: Date },
+    cancelledAt:  { type: Date },
+    cancelReason: { type: String },
   },
   {
     timestamps: true,
   }
 );
 
-// ── VIRTUAL: human-readable order number ──────────────────────────────────────
-// e.g. "SP-00042"
+// ── VIRTUAL: human-readable order number (e.g. "SP-00042") ───────────────────
 orderSchema.virtual("orderNumber").get(function () {
   return `SP-${String(this._id).slice(-5).toUpperCase()}`;
 });

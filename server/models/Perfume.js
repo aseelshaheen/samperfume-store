@@ -4,20 +4,20 @@ const mongoose = require("mongoose");
 const reviewSchema = new mongoose.Schema(
   {
     user:    { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    name:    { type: String, required: true },        // snapshot of username at review time
+    name:    { type: String, required: true },
     rating:  { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, required: true },
+    status:  { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
   },
   { timestamps: true }
 );
 
-// ── Taqseem (individual split) size option sub-schema ─────────────────────────
-// Each entry = one available size you can buy as a split
+// ── Taqseem size option sub-schema ────────────────────────────────────────────
 const taqseemSizeSchema = new mongoose.Schema(
   {
-    ml:       { type: Number, required: true },   // e.g. 5, 10, 15, 20
-    price:    { type: Number, required: true },
-    stock:    { type: Number, required: true, default: 0 },
+    ml:    { type: Number, required: true },
+    price: { type: Number, required: true },
+    stock: { type: Number, required: true, default: 0 },
   },
   { _id: true }
 );
@@ -25,7 +25,6 @@ const taqseemSizeSchema = new mongoose.Schema(
 // ── Main Perfume schema ───────────────────────────────────────────────────────
 const perfumeSchema = new mongoose.Schema(
   {
-    // ── Identity ──────────────────────────────────────────────────────────────
     name: {
       type: String,
       required: [true, "اسم العطر مطلوب"],
@@ -38,25 +37,18 @@ const perfumeSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // ── Classification ────────────────────────────────────────────────────────
-    // Which section of the store this perfume belongs to
     perfumeType: {
       type: String,
       required: true,
-      enum: [
-        "arabic",     // عطور عربية  (oud-based, oriental, musk, etc.)
-        "western",    // عطور أجنبية (French, Italian, American, etc.)
-      ],
+      enum: ["arabic", "western"],
     },
 
-    // Fragrance gender target
     gender: {
       type: String,
       enum: ["male", "female", "unisex"],
       required: true,
     },
 
-    // Fragrance family / notes — for filtering
     fragranceFamily: {
       type: String,
       enum: [
@@ -70,107 +62,81 @@ const perfumeSchema = new mongoose.Schema(
       required: [true, "وصف العطر مطلوب"],
     },
 
-    // ── Images ────────────────────────────────────────────────────────────────
     images: [
       {
-        url:      { type: String, required: true }, // Cloudinary URL
-        publicId: { type: String },                  // Cloudinary public_id (for deletion)
-        isMain:   { type: Boolean, default: false }, // main display image
+        url:      { type: String, required: true },
+        publicId: { type: String },
+        isMain:   { type: Boolean, default: false },
       },
     ],
 
-    // ── Availability mode ─────────────────────────────────────────────────────
-    // Controls which sections the perfume appears in
     availability: {
       type: String,
       required: true,
-      enum: [
-        "full_only",       // full bottles only  — appears only in full-bottle section
-        "taqseem_only",    // taqseem only        — appears only in taqseem section
-        "both",            // both sections       — cross-linked between the two
-      ],
+      enum: ["full_only", "taqseem_only", "both"],
     },
 
-    // ── Full Bottle details ───────────────────────────────────────────────────
-    // Only populated when availability is "full_only" or "both"
     fullBottle: {
       price:   { type: Number },
       stock:   { type: Number, default: 0 },
-      size_ml: { type: Number },     // e.g. 50, 100, 200 ml
+      size_ml: { type: Number },
     },
 
-    // ── Taqseem (individual/split) details ────────────────────────────────────
-    // Only populated when availability is "taqseem_only" or "both"
-    // Each size is its own price + stock entry
     taqseem: {
-      sizes:       { type: [taqseemSizeSchema], default: [] },
-      // e.g. [{ ml: 5, price: 25, stock: 40 }, { ml: 10, price: 45, stock: 30 }]
-
+      sizes:           { type: [taqseemSizeSchema], default: [] },
       sourceBottle_ml: { type: Number },
-      // The full bottle size being split from, for display purposes
-      // e.g. "تقسيمات من قارورة 100 مل"
     },
 
-    // ── SEO / URL slug ────────────────────────────────────────────────────────
     slug: {
-      type: String,
-      unique: true,
+      type:      String,
+      unique:    true,
       lowercase: true,
-      trim: true,
-      // auto-generated from name+brand in pre-save hook below
+      trim:      true,
     },
 
-    // ── Ratings (aggregated) ──────────────────────────────────────────────────
     reviews:     { type: [reviewSchema], default: [] },
-    rating:      { type: Number, default: 0 },       // average, recalculated on review add/edit
+    rating:      { type: Number, default: 0 },
     reviewCount: { type: Number, default: 0 },
 
-    // ── Visibility ────────────────────────────────────────────────────────────
-    isActive: {
-      type: Boolean,
-      default: true, // set to false to hide without deleting
-    },
+    isActive:   { type: Boolean, default: true },
+    isFeatured: { type: Boolean, default: false },
 
-    isFeatured: {
-      type: Boolean,
-      default: false, // shown in homepage featured section
-    },
-
-    // ── Optional promo ────────────────────────────────────────────────────────
     discount: {
-      type: Number,
+      type:    Number,
       default: 0,
-      min: 0,
-      max: 100, // percentage, 0 = no discount
+      min:     0,
+      max:     100,
     },
   },
   {
     timestamps: true,
-    toJSON:     { virtuals: true },
-    toObject:   { virtuals: true },
+    toJSON:   { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
-// ── VIRTUAL: final price after discount (full bottle) ─────────────────────────
+// ── VIRTUAL: discounted price for full bottle ─────────────────────────────────
 perfumeSchema.virtual("fullBottle.finalPrice").get(function () {
   if (!this.fullBottle?.price) return null;
   if (!this.discount) return this.fullBottle.price;
   return +(this.fullBottle.price * (1 - this.discount / 100)).toFixed(2);
 });
 
-// ── HOOK: auto-generate slug from brand + name ────────────────────────────────
-perfumeSchema.pre("save", function (next) {
+// ── HOOK: auto-generate slug ──────────────────────────────────────────────────
+// Using async (no next parameter) — Mongoose uses the returned Promise automatically
+perfumeSchema.pre("save", async function () {
   if (this.isModified("name") || this.isModified("brand") || !this.slug) {
-    this.slug = `${this.brand}-${this.name}`
+    const base = `${this.brand || ""}-${this.name || ""}`;
+    this.slug = base
       .toLowerCase()
       .replace(/\s+/g, "-")
-      .replace(/[^\w\u0600-\u06FF-]/g, "") // keep Arabic chars, letters, digits, hyphens
-      .replace(/--+/g, "-");
+      .replace(/[^\w\u0600-\u06FF-]/g, "")
+      .replace(/--+/g, "-")
+      .trim();
   }
-  next();
 });
 
-// ── HOOK: recalculate average rating when reviews change ──────────────────────
+// ── METHOD: recalculate average rating ───────────────────────────────────────
 perfumeSchema.methods.recalcRating = function () {
   if (this.reviews.length === 0) {
     this.rating = 0;
@@ -182,12 +148,11 @@ perfumeSchema.methods.recalcRating = function () {
   }
 };
 
-// ── INDEXES for fast querying ──────────────────────────────────────────────────
-perfumeSchema.index({ name: "text", brand: "text", description: "text" }); // full-text search
+// ── INDEXES ───────────────────────────────────────────────────────────────────
+perfumeSchema.index({ name: "text", brand: "text", description: "text" });
 perfumeSchema.index({ availability: 1 });
 perfumeSchema.index({ perfumeType: 1 });
 perfumeSchema.index({ gender: 1 });
 perfumeSchema.index({ isActive: 1, isFeatured: 1 });
-perfumeSchema.index({ slug: 1 });
 
 module.exports = mongoose.model("Perfume", perfumeSchema);

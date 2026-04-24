@@ -1,10 +1,45 @@
-import { useState, useEffect } from "react";
-import { ShoppingBag, Menu, X, Search, Heart } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { ShoppingBag, Menu, X, Search, Heart, User, LogOut, Package, ListOrdered, ChevronDown, LayoutDashboard } from "lucide-react";
+import { guestCartGet } from "./../../pages/Cart";
 
-export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [cartCount] = useState(3);
+const API = "/api";
+const getToken = () => localStorage.getItem("sp_token");
+const authHeaders = () => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${getToken()}`,
+});
+
+export default function Navbar({ currentUser, onLogout }) {
+  const [isOpen, setIsOpen]       = useState(false);
+  const [scrolled, setScrolled]   = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
+  const navigate  = useNavigate();
+  const location  = useLocation();
+
+  const isAdmin = currentUser?.role === "admin";
+
+  const refreshCartCount = useCallback(async () => {
+    if (getToken()) {
+      try {
+        const res  = await fetch(`${API}/users/cart`, { headers: authHeaders() });
+        const data = await res.json();
+        if (data.success) {
+          const total = (data.cart ?? []).reduce((s, i) => s + (i.quantity ?? 1), 0);
+          setCartCount(total);
+        }
+      } catch {}
+    } else {
+      const guest = guestCartGet();
+      const total = guest.reduce((s, i) => s + (i.quantity ?? 1), 0);
+      setCartCount(total);
+    }
+  }, []);
+
+  useEffect(() => { refreshCartCount(); }, [location.pathname]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
@@ -12,285 +47,1014 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => { setIsOpen(false); setUserMenuOpen(false); }, [location.pathname]);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("sp_token");
+    onLogout?.();
+    navigate("/");
+    setIsOpen(false);
+    setUserMenuOpen(false);
+  };
+
+  const isActive = (href) => location.pathname === href;
+
   const navLinks = [
-    { label: "الرئيسية", href: "#" },
-    { label: "المتجر", href: "#" },
-    { label: "العلامات التجارية", href: "#" },
-    { label: "العروض", href: "#" },
-    { label: "تواصل معنا", href: "#" },
+    { label: "الرئيسية", href: "/" },
+    { label: "المتجر",   href: "/shop" },
+    { label: "العلامات", href: "/brands" },
+    { label: "تواصل",   href: "/contact" },
   ];
+
+  const userInitial = (currentUser?.username || currentUser?.email || "U")[0].toUpperCase();
+  const userName    = currentUser?.username || currentUser?.email?.split("@")[0];
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Tajawal:wght@300;400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700&display=swap');
 
         :root {
-          --clr-bob: #452829;
-          --clr-bob-light: #6b3d3e;
-          --clr-black: #0e0e0e;
-          --clr-gray-dark: #2a2a2a;
-          --clr-gray-mid: #7a7a7a;
-          --clr-gray-light: #c8c8c8;
-          --clr-border-dark: rgba(255,255,255,0.08);
-          --clr-white: #ffffff;
-          --clr-off: #faf8f6;
+          --bob:        #452829;
+          --bob-light:  #6b3d3e;
+          --bob-pale:   rgba(69,40,41,0.12);
+          --ink:        #0a0808;
+          --surface:    #111010;
+          --surface-2:  #1c1a1a;
+          --border:     rgba(255,255,255,0.07);
+          --muted:      #8a8585;
+          --light:      #e8e0d8;
+          --white:      #f5f0eb;
+          --gold:       #c4a882;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-          font-family: 'Tajawal', sans-serif;
-          direction: rtl;
-          background: #ffffff;
-          color: #1a1a1a;
-        }
+        body { font-family: 'Tajawal', sans-serif; direction: rtl; }
 
-        /* ── TOP BAR ── */
-        .nav-top-bar {
-          background: var(--clr-bob);
+        /* ── Announcement bar ── */
+        .nav-ribbon {
+          background: var(--bob);
           text-align: center;
-          padding: 0.48rem 1rem;
-          font-size: 0.78rem;
-          letter-spacing: 0.06em;
-          color: rgba(255,255,255,0.88);
+          padding: 0.42rem 1rem;
+          font-size: 0.72rem;
+          letter-spacing: 0.1em;
+          color: rgba(255,255,255,0.82);
           font-family: 'Tajawal', sans-serif;
+          font-weight: 400;
         }
 
-        /* ── NAVBAR ── */
+        /* ── Main navbar ── */
         .navbar {
-          background: var(--clr-black);
-          border-bottom: 1px solid var(--clr-border-dark);
-          transition: box-shadow 0.3s ease;
+          background: var(--surface);
+          border-bottom: 1px solid var(--border);
           position: sticky;
           top: 0;
           z-index: 1000;
+          transition: background 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
         }
-
         .navbar.scrolled {
-          box-shadow: 0 2px 24px rgba(0,0,0,0.4);
+          background: rgba(10,8,8,0.96);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          box-shadow: 0 1px 40px rgba(0,0,0,0.6);
+          border-color: rgba(255,255,255,0.04);
         }
 
         .nav-inner {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          height: 68px;
+          height: 66px;
           max-width: 1400px;
           margin: 0 auto;
           padding: 0 2rem;
+          gap: 1rem;
         }
 
-        /* ── LOGO ── */
-        .logo-wrap {
+        /* ── Logo ── */
+        .logo-btn {
           display: flex;
           flex-direction: column;
           align-items: flex-end;
+          gap: 2px;
+          background: none;
+          border: none;
+          cursor: pointer;
           text-decoration: none;
-          gap: 1px;
+          flex-shrink: 0;
         }
-
         .logo-main {
-          font-family: 'Playfair Display', serif;
-          font-size: 1.5rem;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          color: #9a9a9a;
-          line-height: 1;
-        }
-
-        .logo-sub {
-          font-size: 0.6rem;
-          letter-spacing: 0.22em;
-          color: var(--clr-bob);
-          text-transform: uppercase;
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.55rem;
           font-weight: 600;
+          letter-spacing: 0.12em;
+          color: var(--white);
+          line-height: 1;
+          transition: color 0.3s;
+        }
+        .logo-btn:hover .logo-main { color: var(--gold); }
+        .logo-sub {
+          font-size: 0.52rem;
+          letter-spacing: 0.3em;
+          color: var(--bob);
+          text-transform: uppercase;
+          font-weight: 700;
+          font-family: 'Tajawal', sans-serif;
         }
 
-        /* ── NAV LINKS ── */
+        /* ── Desktop nav links ── */
         .nav-links {
           display: flex;
-          gap: 1.8rem;
+          gap: 0;
           list-style: none;
           align-items: center;
+          flex: 1;
+          justify-content: center;
         }
-
-        .nav-links a {
-          font-size: 0.92rem;
+        .nav-link-item a {
+          font-family: 'Tajawal', sans-serif;
+          font-size: 0.88rem;
           font-weight: 400;
-          color: var(--clr-gray-light);
+          color: var(--muted);
           text-decoration: none;
+          padding: 0.5rem 1.1rem;
+          display: block;
           position: relative;
-          padding-bottom: 3px;
           transition: color 0.25s;
-          letter-spacing: 0.02em;
+          letter-spacing: 0.04em;
         }
-
-        .nav-links a::after {
+        .nav-link-item a::after {
           content: '';
           position: absolute;
-          bottom: 0; right: 0;
-          width: 0; height: 1.5px;
-          background: var(--clr-bob);
-          transition: width 0.3s ease;
+          bottom: 0;
+          right: 50%;
+          left: 50%;
+          height: 1px;
+          background: var(--gold);
+          transition: right 0.3s ease, left 0.3s ease;
+        }
+        .nav-link-item a:hover,
+        .nav-link-item a.active {
+          color: var(--white);
+        }
+        .nav-link-item a:hover::after,
+        .nav-link-item a.active::after {
+          right: 1.1rem;
+          left: 1.1rem;
         }
 
-        .nav-links a:hover { color: #ffffff; }
-        .nav-links a:hover::after { width: 100%; }
-
-        /* ── ACTIONS ── */
-        .nav-actions {
+        /* ── Admin dashboard link — distinct pill style, no underline hover ── */
+        .admin-nav-link {
           display: flex;
           align-items: center;
           gap: 0.4rem;
+          font-family: 'Tajawal', sans-serif;
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: var(--bob) !important;
+          text-decoration: none;
+          padding: 0.32rem 0.85rem !important;
+          border: 1px solid rgba(69,40,41,0.35);
+          border-radius: 3px;
+          background: rgba(69,40,41,0.1);
+          transition: background 0.2s, border-color 0.2s, color 0.2s !important;
+          letter-spacing: 0.04em;
+          white-space: nowrap;
+        }
+        .admin-nav-link:hover {
+          background: rgba(69,40,41,0.22) !important;
+          border-color: rgba(69,40,41,0.55) !important;
+          color: #e09a8a !important;
+        }
+        .admin-nav-link.active {
+          background: var(--bob) !important;
+          border-color: var(--bob) !important;
+          color: white !important;
+        }
+        /* Kill the underline animation for admin link */
+        .admin-nav-link::after { display: none !important; }
+
+        /* ── Right actions ── */
+        .nav-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          flex-shrink: 0;
         }
 
         .icon-btn {
           background: none;
           border: none;
           cursor: pointer;
-          color: var(--clr-gray-light);
-          padding: 0.45rem;
+          color: var(--muted);
+          padding: 0.5rem;
           border-radius: 50%;
-          transition: color 0.25s, background 0.25s;
           display: flex;
           align-items: center;
           justify-content: center;
           position: relative;
+          transition: color 0.2s, background 0.2s;
         }
-
         .icon-btn:hover {
-          color: #ffffff;
-          background: rgba(255,255,255,0.07);
+          color: var(--white);
+          background: rgba(255,255,255,0.06);
         }
 
         .cart-badge {
           position: absolute;
-          top: -3px; left: -3px;
-          background: var(--clr-bob);
+          top: 2px;
+          left: 2px;
+          background: var(--bob);
           color: white;
-          font-size: 0.58rem;
+          font-size: 0.5rem;
           font-weight: 700;
-          width: 15px; height: 15px;
-          border-radius: 50%;
+          min-width: 14px;
+          height: 14px;
+          border-radius: 20px;
+          padding: 0 3px;
           display: flex;
           align-items: center;
           justify-content: center;
+          font-family: 'Tajawal', sans-serif;
         }
 
-        .nav-sep {
-          width: 1px; height: 18px;
+        .nav-divider {
+          width: 1px;
+          height: 16px;
+          background: var(--border);
+          margin: 0 0.25rem;
+        }
+
+        /* ── Sign in button ── */
+        .signin-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          background: transparent;
+          color: var(--muted);
+          border: 1px solid rgba(255,255,255,0.1);
+          padding: 0.38rem 0.9rem;
+          font-family: 'Tajawal', sans-serif;
+          font-size: 0.8rem;
+          font-weight: 500;
+          cursor: pointer;
+          border-radius: 2px;
+          transition: all 0.25s;
+          white-space: nowrap;
+          letter-spacing: 0.04em;
+        }
+        .signin-btn:hover {
+          background: var(--bob);
+          color: white;
+          border-color: var(--bob);
+        }
+
+        /* ── User menu ── */
+        .user-menu-wrap {
+          position: relative;
+        }
+        .user-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: transparent;
+          border: 1px solid var(--border);
+          color: var(--muted);
+          padding: 0.32rem 0.7rem 0.32rem 0.5rem;
+          font-family: 'Tajawal', sans-serif;
+          font-size: 0.82rem;
+          cursor: pointer;
+          border-radius: 2px;
+          transition: all 0.25s;
+        }
+        .user-btn:hover, .user-btn.open {
+          border-color: rgba(255,255,255,0.15);
+          background: var(--surface-2);
+          color: var(--white);
+        }
+        .user-avatar {
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          background: var(--bob);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.6rem;
+          font-weight: 700;
+          color: white;
+          flex-shrink: 0;
+        }
+        .user-chevron {
+          transition: transform 0.25s;
+          color: var(--muted);
+        }
+        .user-chevron.open { transform: rotate(180deg); }
+
+        /* ── Dropdown ── */
+        .user-dropdown {
+          position: absolute;
+          top: calc(100% + 10px);
+          left: 0;
+          background: var(--surface-2);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 4px;
+          min-width: 180px;
+          overflow: hidden;
+          box-shadow: 0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03);
+          opacity: 0;
+          transform: translateY(-8px) scale(0.97);
+          pointer-events: none;
+          transition: opacity 0.22s ease, transform 0.22s ease;
+          z-index: 200;
+        }
+        .user-dropdown.open {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          pointer-events: auto;
+        }
+        .dropdown-header {
+          padding: 0.85rem 1rem 0.6rem;
+          border-bottom: 1px solid var(--border);
+        }
+        .dropdown-username {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1rem;
+          font-weight: 600;
+          color: var(--white);
+          line-height: 1.2;
+        }
+        .dropdown-email {
+          font-size: 0.68rem;
+          color: var(--muted);
+          margin-top: 2px;
+          direction: ltr;
+          text-align: right;
+        }
+        /* Admin badge inside dropdown header */
+        .dropdown-role-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+          font-size: 0.6rem;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #e09a8a;
+          background: rgba(69,40,41,0.25);
+          border: 1px solid rgba(69,40,41,0.4);
+          padding: 0.12rem 0.45rem;
+          border-radius: 3px;
+          margin-top: 0.35rem;
+        }
+        .dropdown-section { padding: 0.35rem 0; }
+        .dropdown-item {
+          display: flex;
+          align-items: center;
+          gap: 0.65rem;
+          padding: 0.6rem 1rem;
+          font-family: 'Tajawal', sans-serif;
+          font-size: 0.83rem;
+          color: var(--muted);
+          background: none;
+          border: none;
+          width: 100%;
+          cursor: pointer;
+          transition: background 0.18s, color 0.18s;
+          text-align: right;
+          direction: rtl;
+          letter-spacing: 0.02em;
+        }
+        .dropdown-item:hover {
+          background: rgba(255,255,255,0.05);
+          color: var(--white);
+        }
+        .dropdown-item .di-icon {
+          width: 28px;
+          height: 28px;
+          border-radius: 6px;
+          background: rgba(255,255,255,0.05);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: background 0.18s;
+        }
+        .dropdown-item:hover .di-icon {
           background: rgba(255,255,255,0.1);
-          margin: 0 0.3rem;
         }
+        /* Admin item in dropdown */
+        .dropdown-item.admin-item {
+          color: #c4896e;
+        }
+        .dropdown-item.admin-item .di-icon {
+          background: rgba(69,40,41,0.2);
+        }
+        .dropdown-item.admin-item:hover {
+          background: rgba(69,40,41,0.15);
+          color: #e09a8a;
+        }
+        .dropdown-item.admin-item:hover .di-icon {
+          background: rgba(69,40,41,0.3);
+        }
+        .dropdown-divider {
+          height: 1px;
+          background: var(--border);
+          margin: 0.2rem 0;
+        }
+        .dropdown-item.danger { color: #c0726a; }
+        .dropdown-item.danger .di-icon { background: rgba(192,57,43,0.12); }
+        .dropdown-item.danger:hover {
+          background: rgba(192,57,43,0.1);
+          color: #e08a82;
+        }
+        .dropdown-item.danger:hover .di-icon { background: rgba(192,57,43,0.2); }
 
-        /* ── HAMBURGER ── */
+        /* ── Hamburger ── */
         .hamburger {
           display: none;
           background: none;
           border: none;
           cursor: pointer;
-          color: var(--clr-gray-light);
+          color: var(--muted);
+          padding: 0.4rem;
+          transition: color 0.2s;
         }
+        .hamburger:hover { color: var(--white); }
 
-        /* ── MOBILE MENU ── */
-        .mobile-overlay {
+        /* ══════════════════════════════════════════════
+           MOBILE OVERLAY
+        ══════════════════════════════════════════════ */
+        .mobile-overlay-backdrop {
           position: fixed;
           inset: 0;
-          background: var(--clr-black);
-          z-index: 999;
+          background: rgba(0,0,0,0.6);
+          backdrop-filter: blur(4px);
+          z-index: 1001;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.35s ease;
+        }
+        .mobile-overlay-backdrop.open {
+          opacity: 1;
+          pointer-events: auto;
+        }
+
+        .mobile-drawer {
+          position: fixed;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          width: min(340px, 88vw);
+          background: var(--surface);
+          border-left: 1px solid var(--border);
+          z-index: 1002;
+          display: flex;
+          flex-direction: column;
+          transform: translateX(100%);
+          transition: transform 0.38s cubic-bezier(0.76, 0, 0.24, 1);
+          overflow-y: auto;
+          overscroll-behavior: contain;
+        }
+        .mobile-drawer.open {
+          transform: translateX(0);
+        }
+
+        .mobile-drawer::before {
+          content: '';
+          position: fixed;
+          top: 0;
+          right: min(340px, 88vw);
+          width: 2px;
+          height: 100%;
+          background: linear-gradient(to bottom, transparent, var(--bob), transparent);
+          pointer-events: none;
+        }
+
+        .mob-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1.2rem 1.4rem;
+          border-bottom: 1px solid var(--border);
+          flex-shrink: 0;
+        }
+        .mob-logo {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.3rem;
+          font-weight: 600;
+          color: var(--white);
+          letter-spacing: 0.1em;
+        }
+        .mob-close {
+          background: rgba(255,255,255,0.05);
+          border: 1px solid var(--border);
+          color: var(--muted);
+          cursor: pointer;
+          border-radius: 50%;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+          flex-shrink: 0;
+        }
+        .mob-close:hover {
+          background: rgba(255,255,255,0.1);
+          color: var(--white);
+          border-color: rgba(255,255,255,0.15);
+        }
+
+        /* User section */
+        .mob-user {
+          display: flex;
+          align-items: center;
+          gap: 0.85rem;
+          padding: 1rem 1.4rem;
+          border-bottom: 1px solid var(--border);
+          flex-shrink: 0;
+        }
+        .mob-user-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: var(--bob);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: white;
+          flex-shrink: 0;
+          font-family: 'Cormorant Garamond', serif;
+        }
+        .mob-user-name {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.05rem;
+          font-weight: 600;
+          color: var(--white);
+          line-height: 1.2;
+        }
+        .mob-user-email {
+          font-size: 0.72rem;
+          color: var(--muted);
+          direction: ltr;
+          text-align: right;
+        }
+        .mob-admin-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.2rem;
+          font-size: 0.58rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #e09a8a;
+          background: rgba(69,40,41,0.25);
+          border: 1px solid rgba(69,40,41,0.4);
+          padding: 0.1rem 0.4rem;
+          border-radius: 3px;
+          margin-top: 0.2rem;
+        }
+
+        /* Quick actions */
+        .mob-quick {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          border-bottom: 1px solid var(--border);
+          flex-shrink: 0;
+        }
+        .mob-quick-btn {
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
-          gap: 2rem;
-          transform: translateX(100%);
-          transition: transform 0.4s cubic-bezier(0.76, 0, 0.24, 1);
-        }
-
-        .mobile-overlay.open { transform: translateX(0); }
-
-        .mobile-overlay::before {
-          content: '';
-          position: absolute;
-          top: 0; right: 0;
-          width: 4px; height: 100%;
-          background: var(--clr-bob);
-        }
-
-        .mobile-logo {
-          position: absolute;
-          top: 1.6rem; right: 2rem;
-          font-family: 'Playfair Display', serif;
-          font-size: 1.3rem;
-          color: #9a9a9a;
-          letter-spacing: 0.1em;
-        }
-
-        .mobile-close {
-          position: absolute;
-          top: 1.4rem; left: 1.5rem;
+          gap: 0.3rem;
+          padding: 0.85rem 0.4rem;
           background: none;
           border: none;
-          color: var(--clr-gray-light);
+          border-left: 1px solid var(--border);
+          color: var(--muted);
           cursor: pointer;
+          font-family: 'Tajawal', sans-serif;
+          font-size: 0.65rem;
+          transition: background 0.2s, color 0.2s;
+          position: relative;
+          letter-spacing: 0.03em;
+        }
+        .mob-quick-btn:first-child { border-left: none; }
+        .mob-quick-btn:hover {
+          background: rgba(255,255,255,0.04);
+          color: var(--white);
+        }
+        /* Admin quick btn highlight */
+        .mob-quick-btn.admin-quick {
+          color: #c4896e;
+          background: rgba(69,40,41,0.08);
+        }
+        .mob-quick-btn.admin-quick:hover {
+          background: rgba(69,40,41,0.18);
+          color: #e09a8a;
         }
 
-        .mobile-overlay a {
-          font-size: 1.8rem;
+        /* Nav links */
+        .mob-nav {
+          display: flex;
+          flex-direction: column;
+          padding: 0.5rem 0;
+          border-bottom: 1px solid var(--border);
+          flex-shrink: 0;
+        }
+        .mob-nav-label {
+          font-size: 0.55rem;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: var(--bob);
+          padding: 0.6rem 1.4rem 0.3rem;
           font-weight: 700;
-          color: var(--clr-gray-light);
-          text-decoration: none;
-          transition: color 0.25s;
+        }
+        .mob-nav-link {
+          padding: 0.72rem 1.4rem;
+          font-family: 'Tajawal', sans-serif;
+          font-size: 0.95rem;
+          font-weight: 400;
+          color: var(--muted);
+          background: none;
+          border: none;
+          text-align: right;
+          cursor: pointer;
+          transition: color 0.2s, background 0.2s, padding 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          letter-spacing: 0.02em;
+        }
+        .mob-nav-link:hover,
+        .mob-nav-link.active {
+          color: var(--white);
+          background: rgba(255,255,255,0.03);
+          padding-right: 1.8rem;
+        }
+        .mob-nav-link.active {
+          color: var(--gold);
+        }
+        .mob-nav-link::before {
+          content: '';
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+          background: var(--bob);
+          opacity: 0;
+          transition: opacity 0.2s;
+          flex-shrink: 0;
+        }
+        .mob-nav-link:hover::before,
+        .mob-nav-link.active::before { opacity: 1; }
+
+        /* Mobile admin nav link */
+        .mob-nav-link.admin-mob-link {
+          color: #c4896e;
+          font-weight: 600;
+        }
+        .mob-nav-link.admin-mob-link:hover {
+          color: #e09a8a;
+          background: rgba(69,40,41,0.1);
+          padding-right: 1.8rem;
+        }
+        .mob-nav-link.admin-mob-link.active {
+          color: #e09a8a;
+          background: rgba(69,40,41,0.15);
+        }
+        .mob-nav-link.admin-mob-link::before {
+          background: var(--bob);
         }
 
-        .mobile-overlay a:hover { color: var(--clr-bob); }
+        /* Bottom */
+        .mob-bottom {
+          padding: 1.2rem 1.4rem;
+          margin-top: auto;
+          flex-shrink: 0;
+        }
+        .mob-auth-btn {
+          width: 100%;
+          background: var(--bob);
+          color: white;
+          border: none;
+          padding: 0.8rem;
+          font-family: 'Tajawal', sans-serif;
+          font-size: 0.9rem;
+          font-weight: 700;
+          cursor: pointer;
+          border-radius: 2px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          transition: background 0.25s;
+          letter-spacing: 0.04em;
+        }
+        .mob-auth-btn:hover { background: var(--bob-light); }
+        .mob-auth-btn.ghost {
+          background: transparent;
+          border: 1px solid var(--border);
+          color: var(--muted);
+          margin-top: 0.6rem;
+        }
+        .mob-auth-btn.ghost:hover {
+          background: rgba(255,255,255,0.04);
+          color: var(--white);
+        }
+        .mob-auth-btn.danger {
+          background: transparent;
+          border: 1px solid rgba(192,57,43,0.3);
+          color: #c0726a;
+          margin-top: 0.6rem;
+        }
+        .mob-auth-btn.danger:hover {
+          background: rgba(192,57,43,0.1);
+          color: #e08a82;
+        }
 
         @media (max-width: 900px) {
-          .nav-links { display: none; }
-          .hamburger { display: flex; }
+          .nav-links      { display: none; }
+          .hamburger      { display: flex; }
+          .signin-btn     { display: none; }
+          .user-menu-wrap { display: none; }
         }
       `}</style>
 
-      <div className="nav-top-bar">
-        ✦ شحن مجاني على الطلبات فوق ₪500 &nbsp;·&nbsp; عروض حصرية لأعضاء VIP ✦
-      </div>
-
+      {/* ── Main navbar ── */}
       <nav className={`navbar ${scrolled ? "scrolled" : ""}`}>
         <div className="nav-inner">
-          <a href="#" className="logo-wrap">
+
+          {/* Logo */}
+          <button className="logo-btn" onClick={() => navigate("/")}>
             <span className="logo-main">SamPerfume</span>
             <span className="logo-sub">عطور فاخرة</span>
-          </a>
+          </button>
 
+          {/* Desktop links */}
           <ul className="nav-links">
             {navLinks.map((l) => (
-              <li key={l.label}><a href={l.href}>{l.label}</a></li>
+              <li key={l.label} className="nav-link-item">
+                <a
+                  href={l.href}
+                  className={isActive(l.href) ? "active" : ""}
+                  onClick={(e) => { e.preventDefault(); navigate(l.href); }}
+                >
+                  {l.label}
+                </a>
+              </li>
             ))}
+
+            {/* Admin dashboard link — only visible to admins */}
+            {isAdmin && (
+              <li className="nav-link-item" style={{ marginRight: "0.6rem" }}>
+                <a
+                  href="/admin"
+                  className={`admin-nav-link${isActive("/admin") ? " active" : ""}`}
+                  onClick={(e) => { e.preventDefault(); navigate("/admin"); }}
+                >
+                  <LayoutDashboard size={13} />
+                  لوحة التحكم
+                </a>
+              </li>
+            )}
           </ul>
 
+          {/* Actions */}
           <div className="nav-actions">
-            <button className="icon-btn"><Search size={18} /></button>
-            <button className="icon-btn"><Heart size={18} /></button>
-            <div className="nav-sep" />
-            <button className="icon-btn">
-              <ShoppingBag size={19} />
+            <button className="icon-btn" aria-label="بحث"><Search size={17} /></button>
+            <button className="icon-btn" aria-label="المفضلة" onClick={() => navigate("/wishlist")}>
+              <Heart size={17} />
+            </button>
+            <button className="icon-btn" aria-label="السلة" onClick={() => navigate("/cart")}>
+              <ShoppingBag size={18} />
               {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
             </button>
-            <button className="hamburger" onClick={() => setIsOpen(true)}>
-              <Menu size={24} />
+
+            <div className="nav-divider" />
+
+            {currentUser ? (
+              <div className="user-menu-wrap" ref={userMenuRef}>
+                <button
+                  className={`user-btn ${userMenuOpen ? "open" : ""}`}
+                  onClick={() => setUserMenuOpen(v => !v)}
+                >
+                  <div className="user-avatar">{userInitial}</div>
+                  <span>{userName}</span>
+                  <ChevronDown size={13} className={`user-chevron ${userMenuOpen ? "open" : ""}`} />
+                </button>
+
+                <div className={`user-dropdown ${userMenuOpen ? "open" : ""}`}>
+                  <div className="dropdown-header">
+                    <div className="dropdown-username">{userName}</div>
+                    {currentUser.email && (
+                      <div className="dropdown-email">{currentUser.email}</div>
+                    )}
+                    {isAdmin && (
+                      <div className="dropdown-role-badge">
+                        <LayoutDashboard size={8} /> مدير
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Admin section at top of dropdown */}
+                  {isAdmin && (
+                    <>
+                      <div className="dropdown-section">
+                        <button className="dropdown-item admin-item" onClick={() => { navigate("/admin"); setUserMenuOpen(false); }}>
+                          <span className="di-icon"><LayoutDashboard size={12} /></span>
+                          لوحة التحكم
+                        </button>
+                      </div>
+                      <div className="dropdown-divider" />
+                    </>
+                  )}
+
+                  <div className="dropdown-section">
+                    <button className="dropdown-item" onClick={() => { navigate("/profile"); setUserMenuOpen(false); }}>
+                      <span className="di-icon"><User size={12} /></span>
+                      حسابي
+                    </button>
+                    <button className="dropdown-item" onClick={() => { navigate("/my-orders"); setUserMenuOpen(false); }}>
+                      <span className="di-icon"><ListOrdered size={12} /></span>
+                      طلباتي
+                    </button>
+                    <button className="dropdown-item" onClick={() => { navigate("/wishlist"); setUserMenuOpen(false); }}>
+                      <span className="di-icon"><Heart size={12} /></span>
+                      المفضلة
+                    </button>
+                  </div>
+                  <div className="dropdown-divider" />
+                  <div className="dropdown-section">
+                    <button className="dropdown-item danger" onClick={handleLogout}>
+                      <span className="di-icon"><LogOut size={12} /></span>
+                      تسجيل الخروج
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button className="signin-btn" onClick={() => navigate("/auth")}>
+                <User size={14} />
+                تسجيل الدخول
+              </button>
+            )}
+
+            <button className="hamburger" onClick={() => setIsOpen(true)} aria-label="القائمة">
+              <Menu size={22} />
             </button>
           </div>
         </div>
       </nav>
 
-      <div className={`mobile-overlay ${isOpen ? "open" : ""}`}>
-        <span className="mobile-logo">SamPerfume</span>
-        <button className="mobile-close" onClick={() => setIsOpen(false)}>
-          <X size={26} />
-        </button>
-        {navLinks.map((l) => (
-          <a key={l.label} href={l.href} onClick={() => setIsOpen(false)}>{l.label}</a>
-        ))}
+      {/* ══════════════════════════════════════
+          MOBILE — backdrop + drawer
+      ══════════════════════════════════════ */}
+      <div
+        className={`mobile-overlay-backdrop ${isOpen ? "open" : ""}`}
+        onClick={() => setIsOpen(false)}
+        aria-hidden="true"
+      />
+
+      <div className={`mobile-drawer ${isOpen ? "open" : ""}`} role="dialog" aria-modal="true">
+
+        {/* Head */}
+        <div className="mob-head">
+          <span className="mob-logo">SamPerfume</span>
+          <button className="mob-close" onClick={() => setIsOpen(false)} aria-label="إغلاق">
+            <X size={15} />
+          </button>
+        </div>
+
+        {/* User info */}
+        {currentUser && (
+          <div className="mob-user">
+            <div className="mob-user-avatar">{userInitial}</div>
+            <div>
+              <div className="mob-user-name">{userName}</div>
+              {currentUser.email && (
+                <div className="mob-user-email">{currentUser.email}</div>
+              )}
+              {isAdmin && (
+                <div className="mob-admin-badge">
+                  <LayoutDashboard size={8} /> مدير النظام
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Quick actions */}
+        <div className="mob-quick">
+          <button className="mob-quick-btn" onClick={() => navigate("/cart")}>
+            <div style={{ position: "relative" }}>
+              <ShoppingBag size={19} />
+              {cartCount > 0 && (
+                <span style={{
+                  position: "absolute", top: -5, left: -5,
+                  background: "#452829", color: "white",
+                  fontSize: "0.5rem", fontWeight: 700,
+                  minWidth: 13, height: 13, borderRadius: 10,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  padding: "0 2px",
+                }}>{cartCount}</span>
+              )}
+            </div>
+            السلة
+          </button>
+          <button className="mob-quick-btn" onClick={() => navigate("/wishlist")}>
+            <Heart size={19} />
+            المفضلة
+          </button>
+          {currentUser ? (
+            <>
+              <button className="mob-quick-btn" onClick={() => navigate("/my-orders")}>
+                <Package size={19} />
+                طلباتي
+              </button>
+              {isAdmin ? (
+                <button className="mob-quick-btn admin-quick" onClick={() => navigate("/admin")}>
+                  <LayoutDashboard size={19} />
+                  التحكم
+                </button>
+              ) : (
+                <button className="mob-quick-btn" onClick={() => navigate("/profile")}>
+                  <User size={19} />
+                  حسابي
+                </button>
+              )}
+            </>
+          ) : (
+            <button className="mob-quick-btn" onClick={() => navigate("/auth")} style={{ gridColumn: "span 2" }}>
+              <User size={19} />
+              دخول
+            </button>
+          )}
+        </div>
+
+        {/* Nav links */}
+        <nav className="mob-nav">
+          <div className="mob-nav-label">القائمة</div>
+          {navLinks.map((l) => (
+            <button
+              key={l.label}
+              className={`mob-nav-link ${isActive(l.href) ? "active" : ""}`}
+              onClick={() => navigate(l.href)}
+            >
+              {l.label}
+            </button>
+          ))}
+
+          {/* Admin link in mobile nav */}
+          {isAdmin && (
+            <>
+              <div className="mob-nav-label" style={{ marginTop: "0.4rem" }}>الإدارة</div>
+              <button
+                className={`mob-nav-link admin-mob-link ${isActive("/admin") ? "active" : ""}`}
+                onClick={() => navigate("/admin")}
+              >
+                <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <LayoutDashboard size={15} /> لوحة التحكم
+                </span>
+              </button>
+            </>
+          )}
+        </nav>
+
+        {/* Bottom auth */}
+        <div className="mob-bottom">
+          {currentUser ? (
+            <button className="mob-auth-btn danger" onClick={handleLogout}>
+              <LogOut size={15} /> تسجيل الخروج
+            </button>
+          ) : (
+            <>
+              <button className="mob-auth-btn" onClick={() => navigate("/auth")}>
+                <User size={15} /> تسجيل الدخول
+              </button>
+              <button className="mob-auth-btn ghost" onClick={() => navigate("/auth?tab=register")}>
+                إنشاء حساب جديد
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </>
   );

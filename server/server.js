@@ -13,8 +13,26 @@ connectDB();
 
 const app = express();
 
+// ── CORS — must come BEFORE helmet and all routes ─────────────────────────────
+// helmet can strip or conflict with CORS headers if it runs first
+const corsOptions = {
+  origin: [
+    process.env.CLIENT_URL || "http://localhost:5173",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+
+
 // ── Security ──────────────────────────────────────────────────────────────────
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: false, // don't block cross-origin fetches
+}));
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -30,12 +48,6 @@ const apiLimiter = rateLimit({
 app.use("/api/auth", authLimiter);
 app.use("/api", apiLimiter);
 
-// ── CORS ──────────────────────────────────────────────────────────────────────
-app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
-  credentials: true,
-}));
-
 // ── Body parsing ──────────────────────────────────────────────────────────────
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -47,9 +59,10 @@ if (process.env.NODE_ENV === "development") {
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use("/api/auth",     require("./routes/authRoutes"));
-app.use("/api/users",    require("./routes/userRoutes"));   // cart + wishlist
-// app.use("/api/perfumes", require("./routes/perfumeRoutes")); // uncomment when ready
-// app.use("/api/orders",   require("./routes/orderRoutes"));   // uncomment when ready
+app.use("/api/users",    require("./routes/userRoutes"));    // cart + wishlist
+app.use("/api/perfumes", require("./routes/perfumeRoutes"));
+app.use("/api/admin",    require("./routes/adminRoutes"));
+app.use("/api/orders",   require("./routes/orderRoutes"));
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get("/api/health", (req, res) => {
@@ -76,7 +89,6 @@ app.use((err, req, res, next) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} [${process.env.NODE_ENV}]`);
+app.listen(5000, '0.0.0.0', () => {
+  console.log('Server running on port 5000');
 });
