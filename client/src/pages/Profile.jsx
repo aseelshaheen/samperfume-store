@@ -5,7 +5,7 @@ import {
   Save, Loader2, LogOut, Star, Check, Package, Layers
 } from "lucide-react";
 
-const API = "/api";
+const API = import.meta.env.VITE_API_URL || "/api";;
 const getToken = () => localStorage.getItem("sp_token");
 const authHeaders = () => ({
   "Content-Type": "application/json",
@@ -411,7 +411,7 @@ export default function Profile() {
                   return (
                     <div key={p._id} className="wl-card">
                       <button className="wl-remove" onClick={() => removeFromWishlist(p._id)}><Trash2 size={12} /></button>
-                      {img ? <img src={img} alt={p.name} className="wl-img" /> : <div className="wl-img-ph"><Package size={28} /></div>}
+                      {img ? <img loading="lazy" src={img} alt={p.name} className="wl-img" /> : <div className="wl-img-ph"><Package size={28} /></div>}
                       <div className="wl-body">
                         <span className="wl-brand">{p.brand}</span>
                         <span className="wl-name">{p.name}</span>

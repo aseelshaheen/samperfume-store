@@ -6,8 +6,8 @@ import AdminOrders    from "./AdminOrders";
 import AdminUsers     from "./AdminUsers";
 import AdminReviews   from "./AdminReviews";
 
-const API = "/api";
-const OWNER_EMAIL = "aseelshaheen080@gmail.com";
+const API = import.meta.env.VITE_API_URL || "/api";
+const OWNER_EMAIL = "samperfume8@gmail.com";
 
 export default function AdminApp() {
   const [page,      setPage]      = useState("dashboard");

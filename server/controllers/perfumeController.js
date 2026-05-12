@@ -8,11 +8,11 @@ const Perfume = require("../models/Perfume");
 // ─────────────────────────────────────────────────────────────────────────────
 const getPerfumes = async (req, res) => {
   try {
-    const {
-      search, brand, perfumeType, gender,
-      fragranceFamily, availability,
-      sort = "newest", page = 1, limit = 40,
-    } = req.query;
+const {
+  search, brand, perfumeType, gender,
+  fragranceFamily, availability, isFeatured,
+  sort = "newest", page = 1, limit = 40,
+} = req.query;
 
     const filter = { isActive: true };
 
@@ -24,6 +24,7 @@ const getPerfumes = async (req, res) => {
     if (perfumeType)     filter.perfumeType     = perfumeType;
     if (gender)          filter.gender          = gender;
     if (fragranceFamily) filter.fragranceFamily = fragranceFamily;
+    if (isFeatured === "true") filter.isFeatured = true;
 
     if (availability && availability !== "all") {
       filter.availability = availability;

@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { guestCartAdd } from "./Cart";
 
-const API = "/api";
+const API = import.meta.env.VITE_API_URL || "/api";;
 const getToken = () => localStorage.getItem("sp_token");
 const authHeaders = () => ({
   "Content-Type": "application/json",
@@ -425,7 +425,7 @@ const originalPrice =
         <div className="pd-gallery">
           <div className="pd-main-img-wrap">
             {mainImg ? (
-              <img src={mainImg} alt={perfume.name} className="pd-main-img" />
+              <img loading="lazy" src={mainImg} alt={perfume.name} className="pd-main-img" />
             ) : (
               <div className="pd-img-ph">
                 <Package size={64} strokeWidth={0.8} />
@@ -443,7 +443,7 @@ const originalPrice =
                   className={`pd-thumb ${selectedImg === i ? "active" : ""}`}
                   onClick={() => setSelectedImg(i)}
                 >
-                  <img src={img.url} alt="" />
+                  <img loading="lazy" src={img.url} alt="" />
                 </div>
               ))}
             </div>

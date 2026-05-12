@@ -3,9 +3,9 @@ import {
   Send, Phone, Mail, MapPin, Clock,
   CheckCircle, Loader2, MessageCircle
 } from "lucide-react";
-import { FaInstagram, FaWhatsapp } from "react-icons/fa";
-
-const API = "/api";
+import { FaInstagram, FaWhatsapp, FaFacebook  } from "react-icons/fa";
+import emailjs from "@emailjs/browser";
+const API = import.meta.env.VITE_API_URL || "/api";;
 
 const SUBJECTS = [
   { v: "order",    l: "استفسار عن طلب" },
@@ -16,35 +16,24 @@ const SUBJECTS = [
 ];
 
 const CONTACT_ITEMS = [
-  {
-    icon: Phone,
-    label: "رقم الهاتف",
-    value: "+970 599 000 000",
-    href: "tel:+970599000000",
-  },
+
   {
     icon: FaWhatsapp,
     label: "واتساب",
-    value: "+970 599 000 000",
-    href: "https://wa.me/970599000000",
+    value: "+970 599 077 193",
+    href: "https://wa.me/message/6GBQWGLBSFR7A1",
     external: true,
   },
   {
     icon: Mail,
     label: "البريد الإلكتروني",
-    value: "info@samperfume.ps",
-    href: "mailto:info@samperfume.ps",
+    value: "samperfume8@gmail.com",
+    href: "mailto:samperfume8@gmail.com",
   },
   {
     icon: MapPin,
     label: "الموقع",
     value: "سلفيت، فلسطين",
-    href: null,
-  },
-  {
-    icon: Clock,
-    label: "أوقات الدوام",
-    value: "السبت – الخميس، ٩ص – ٩م",
     href: null,
   },
 ];
@@ -57,32 +46,34 @@ export default function ContactUs() {
 
   const handleChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.name.trim() || !form.message.trim()) {
-      setError("يرجى ملء الاسم والرسالة على الأقل.");
-      return;
-    }
-    setSubmitting(true); setError("");
-    try {
-      const res = await fetch(`${API}/contact`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      }).catch(() => null);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!form.name.trim() || !form.message.trim()) {
+    setError("يرجى ملء الاسم والرسالة على الأقل.");
+    return;
+  }
+  setSubmitting(true); setError("");
 
-      if (!res || res.ok) {
-        setSuccess(true);
-        setForm({ name: "", phone: "", email: "", subject: "", message: "" });
-      } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.message ?? "حدث خطأ. يرجى المحاولة لاحقاً.");
-      }
-    } catch {
-      setError("خطأ في الاتصال بالخادم.");
-    }
-    setSubmitting(false);
-  };
+  try {
+    await emailjs.send(
+      "YOUR_SERVICE_ID",      // from EmailJS dashboard
+      "YOUR_TEMPLATE_ID",     // from EmailJS dashboard
+      {
+        from_name:    form.name,
+        phone:        form.phone,
+        from_email:   form.email,
+        subject:      form.subject,
+        message:      form.message,
+      },
+      "YOUR_PUBLIC_KEY"       // from EmailJS dashboard
+    );
+    setSuccess(true);
+    setForm({ name: "", phone: "", email: "", subject: "", message: "" });
+  } catch (err) {
+    setError("حدث خطأ أثناء الإرسال. يرجى المحاولة لاحقاً.");
+  }
+  setSubmitting(false);
+};
 
   return (
     <>
@@ -452,11 +443,12 @@ export default function ContactUs() {
 
           <span className="cu-social-label">تابعنا على</span>
           <div className="cu-socials">
-            <a href="https://instagram.com" target="_blank" rel="noreferrer" className="cu-social-btn">
+            <a href="https://www.instagram.com/sam.perfume?igsh=MTRmeHRiODE2MmFiYw==" target="_blank" rel="noreferrer" className="cu-social-btn">
               <FaInstagram size={14} /> إنستغرام
             </a>
-            <a href="https://wa.me/970599000000" target="_blank" rel="noreferrer" className="cu-social-btn">
-              <FaWhatsapp size={14} /> واتساب
+
+            <a href="https://www.facebook.com/share/1Li9qxxJYm/?mibextid=wwXIfr" target="_blank" rel="noreferrer" className="cu-social-btn">
+              <FaFacebook  size={14} /> فيسبوك
             </a>
           </div>
         </div>
@@ -561,7 +553,7 @@ export default function ContactUs() {
                 <div className="cu-wa-note">
                   <FaWhatsapp size={16} />
                   تفضّل التواصل المباشر؟{" "}
-                  <a href="https://wa.me/970599000000" target="_blank" rel="noreferrer">
+                  <a href="https://wa.me/message/6GBQWGLBSFR7A1" target="_blank" rel="noreferrer">
                     راسلنا على واتساب
                   </a>
                 </div>

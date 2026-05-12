@@ -13,7 +13,7 @@
   --bob-dim:      rgba(69,40,41,0.12);
 
   /* Hero */
-  --hero-bg:      #57595B;
+  --hero-bg:      #37353E;
   --hero-bg-dark: #46484a;
   --hero-text:    #ffffff;
   --hero-sub:     rgba(255,255,255,0.52);
@@ -185,28 +185,7 @@ h1:lang(en), h2:lang(en), .font-display:lang(en) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   PAGE HERO  —  reusable across all pages
-   ══════════════════════════════════════════════════════════════════════════
-
-   USAGE:
-     <header class="page-hero">
-       <div class="page-hero__pattern"></div>
-       <div class="page-hero__glow"></div>
-       <div class="page-hero__inner">
-         <span class="page-hero__eyebrow">نص صغير</span>
-         <h1 class="page-hero__title">عنوان الصفحة</h1>
-         <p class="page-hero__sub">وصف قصير</p>
-         <div class="page-hero__rule">
-           <div class="page-hero__rule-line"></div>
-           <div class="page-hero__rule-dot"></div>
-           <div class="page-hero__rule-line"></div>
-         </div>
-       </div>
-     </header>
-
-   MODIFIERS:
-     .page-hero--sm    → less padding (secondary pages)
-     .page-hero--left  → right-align content (RTL = right is visual left)
+   PAGE HERO
    ══════════════════════════════════════════════════════════════════════════ */
 
 @keyframes ph-fade-up {
@@ -297,9 +276,7 @@ h1:lang(en), h2:lang(en), .font-display:lang(en) {
   width: 52px;
   background: linear-gradient(to left, var(--hero-gold), transparent);
 }
-.page-hero__rule-line:first-child {
-  transform: scaleX(-1);
-}
+.page-hero__rule-line:first-child { transform: scaleX(-1); }
 
 .page-hero__rule-dot {
   width: 5px;
@@ -309,23 +286,13 @@ h1:lang(en), h2:lang(en), .font-display:lang(en) {
   opacity: 0.8;
 }
 
-.page-hero--sm {
-  padding: 2.8rem 2rem 2.4rem;
-}
-.page-hero--sm .page-hero__title {
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
-}
-.page-hero--sm .page-hero__rule {
-  margin-top: 1.4rem;
-}
+.page-hero--sm { padding: 2.8rem 2rem 2.4rem; }
+.page-hero--sm .page-hero__title { font-size: clamp(1.6rem, 3vw, 2.2rem); }
+.page-hero--sm .page-hero__rule  { margin-top: 1.4rem; }
 
-.page-hero--left {
-  text-align: right;
-}
+.page-hero--left { text-align: right; }
 .page-hero--left .page-hero__eyebrow,
-.page-hero--left .page-hero__rule {
-  justify-content: flex-end;
-}
+.page-hero--left .page-hero__rule { justify-content: flex-end; }
 
 /* ── BUTTONS ───────────────────────────────────────────────────────────── */
 .btn {
@@ -343,36 +310,12 @@ h1:lang(en), h2:lang(en), .font-display:lang(en) {
   transition: background var(--ease), transform var(--ease), border-color var(--ease), color var(--ease);
   white-space: nowrap;
 }
-
-.btn-primary {
-  background: var(--bob);
-  color: var(--white);
-}
-.btn-primary:hover {
-  background: var(--bob-light);
-  transform: translateY(-2px);
-}
-
-.btn-outline {
-  background: transparent;
-  color: var(--black-soft);
-  border: 1.5px solid #ccc;
-}
-.btn-outline:hover {
-  border-color: var(--bob);
-  color: var(--bob);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--gray-mid);
-  border: 1px solid var(--border);
-}
-.btn-ghost:hover {
-  background: var(--off-white);
-  color: var(--black-soft);
-}
-
+.btn-primary { background: var(--bob); color: var(--white); }
+.btn-primary:hover { background: var(--bob-light); transform: translateY(-2px); }
+.btn-outline { background: transparent; color: var(--black-soft); border: 1.5px solid #ccc; }
+.btn-outline:hover { border-color: var(--bob); color: var(--bob); }
+.btn-ghost { background: transparent; color: var(--gray-mid); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--off-white); color: var(--black-soft); }
 .btn-sm { padding: 0.5rem 1.1rem; font-size: 0.82rem; }
 .btn-lg { padding: 1rem 2.4rem; font-size: 1rem; }
 
@@ -385,87 +328,38 @@ h1:lang(en), h2:lang(en), .font-display:lang(en) {
   cursor: pointer;
   transition: box-shadow var(--ease-out), transform var(--ease-out);
 }
+.product-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
 
-.product-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-3px);
-}
-
-.card-img-wrap {
-  position: relative;
-  overflow: hidden;
-  aspect-ratio: 1;
-  background: #f5f1ed;
-}
-
-.card-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-}
+.card-img-wrap { position: relative; overflow: hidden; aspect-ratio: 1; background: #f5f1ed; }
+.card-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
 
 .card-tag {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  background: var(--bob);
-  color: var(--white);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  padding: 0.22rem 0.6rem;
-  border-radius: var(--r-sm);
+  position: absolute; top: 0.75rem; right: 0.75rem;
+  background: var(--bob); color: var(--white);
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em;
+  padding: 0.22rem 0.6rem; border-radius: var(--r-sm);
 }
-
 .card-discount {
-  position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
-  background: var(--black-soft);
-  color: var(--white);
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 0.22rem 0.5rem;
-  border-radius: var(--r-sm);
+  position: absolute; top: 0.75rem; left: 0.75rem;
+  background: var(--black-soft); color: var(--white);
+  font-size: 0.65rem; font-weight: 700; padding: 0.22rem 0.5rem; border-radius: var(--r-sm);
 }
-
 .card-actions {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(26,26,26,0.92);
-  display: flex;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: all 0.28s ease;
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(26,26,26,0.92); display: flex;
+  opacity: 0; transform: translateY(8px); transition: all 0.28s ease;
 }
-
-.card-actions.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
+.card-actions.visible { opacity: 1; transform: translateY(0); }
 .card-action-btn {
-  flex: 1;
-  background: none;
-  border: none;
-  color: #ccc;
-  font-family: var(--font-body);
-  font-size: 0.78rem;
-  padding: 0.7rem 0.5rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.3rem;
+  flex: 1; background: none; border: none; color: #ccc;
+  font-family: var(--font-body); font-size: 0.78rem; padding: 0.7rem 0.5rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.3rem;
   transition: background var(--ease), color var(--ease);
   border-right: 1px solid rgba(255,255,255,0.08);
 }
-.card-action-btn:last-child  { border-right: none; }
-.card-action-btn:hover       { background: var(--bob); color: var(--white); }
-.card-action-btn.primary     { background: var(--bob); color: var(--white); }
+.card-action-btn:last-child { border-right: none; }
+.card-action-btn:hover      { background: var(--bob); color: var(--white); }
+.card-action-btn.primary    { background: var(--bob); color: var(--white); }
 
 .card-body    { padding: 1rem 1.1rem 1.2rem; }
 .card-brand   { font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: #aaa; display: block; margin-bottom: 0.22rem; }
@@ -478,193 +372,101 @@ h1:lang(en), h2:lang(en), .font-display:lang(en) {
 .card-original { font-size: 0.82rem; color: #bbb; text-decoration: line-through; }
 
 /* ── AVAILABILITY BADGE COLORS ─────────────────────────────────────────── */
-.avail-both     { background: var(--avail-both); }
-.avail-full     { background: var(--avail-full); }
-.avail-taqseem  { background: var(--avail-taqseem); }
+.avail-both    { background: var(--avail-both); }
+.avail-full    { background: var(--avail-full); }
+.avail-taqseem { background: var(--avail-taqseem); }
 
 /* ── STARS ─────────────────────────────────────────────────────────────── */
 .stars { display: flex; gap: 2px; }
 
 /* ── BADGE / PILL ──────────────────────────────────────────────────────── */
 .badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.2rem 0.6rem;
-  border-radius: var(--r-full);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  display: inline-flex; align-items: center;
+  padding: 0.2rem 0.6rem; border-radius: var(--r-full);
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.04em;
 }
-
-.badge-success  { background: rgba(46,125,90,0.12); color: var(--success); }
-.badge-error    { background: rgba(192,57,43,0.12); color: var(--error); }
-.badge-warning  { background: rgba(183,119,13,0.12); color: var(--warning); }
-.badge-neutral  { background: var(--off-white); color: var(--gray-mid); border: 1px solid var(--border); }
+.badge-success { background: rgba(46,125,90,0.12);  color: var(--success); }
+.badge-error   { background: rgba(192,57,43,0.12);  color: var(--error); }
+.badge-warning { background: rgba(183,119,13,0.12); color: var(--warning); }
+.badge-neutral { background: var(--off-white); color: var(--gray-mid); border: 1px solid var(--border); }
 
 /* ── FORM ELEMENTS ─────────────────────────────────────────────────────── */
 .input {
-  width: 100%;
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-sm);
-  padding: 0.72rem 1rem;
-  font-family: var(--font-body);
-  font-size: 0.95rem;
-  color: var(--black-soft);
-  background: var(--white);
-  outline: none;
+  width: 100%; border: 1.5px solid var(--border); border-radius: var(--r-sm);
+  padding: 0.72rem 1rem; font-family: var(--font-body); font-size: 0.95rem;
+  color: var(--black-soft); background: var(--white); outline: none;
   transition: border-color var(--ease), box-shadow var(--ease);
 }
-
-.input:focus {
-  border-color: var(--bob);
-  box-shadow: 0 0 0 3px var(--bob-dim);
-}
-
+.input:focus { border-color: var(--bob); box-shadow: 0 0 0 3px var(--bob-dim); }
 .input::placeholder { color: #bbb; }
-
-.label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #555;
-  margin-bottom: 0.38rem;
-  letter-spacing: 0.02em;
-}
+.label { display: block; font-size: 0.8rem; font-weight: 600; color: #555; margin-bottom: 0.38rem; }
 
 /* ── ALERT / MESSAGES ──────────────────────────────────────────────────── */
 .msg {
-  font-size: 0.82rem;
-  border-radius: var(--r-sm);
-  padding: 0.6rem 0.9rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  font-size: 0.82rem; border-radius: var(--r-sm);
+  padding: 0.6rem 0.9rem; font-weight: 500;
+  display: flex; align-items: center; gap: 0.4rem;
 }
-
 .msg-error   { background: #fdf0f0; color: var(--error);   border: 1px solid #f5c6c6; }
 .msg-success { background: #f0faf5; color: var(--success);  border: 1px solid #b3e0ca; }
 .msg-warning { background: #fdf8ec; color: var(--warning);  border: 1px solid #f0dfa0; }
 
 /* ── DIVIDER ───────────────────────────────────────────────────────────── */
-.divider {
-  height: 1px;
-  background: var(--border);
-  margin: 1.5rem 0;
-}
+.divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+.divider-text { display: flex; align-items: center; gap: 0.8rem; color: var(--gray-mid); font-size: 0.78rem; }
+.divider-text::before, .divider-text::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-.divider-text {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  color: var(--gray-mid);
-  font-size: 0.78rem;
-}
-
-.divider-text::before,
-.divider-text::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-
-/* ── LOADING SPINNER ───────────────────────────────────────────────────── */
+/* ── LOADING ───────────────────────────────────────────────────────────── */
 @keyframes spin { to { transform: rotate(360deg); } }
-
 .spinner {
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--border);
-  border-top-color: var(--bob);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  width: 22px; height: 22px;
+  border: 2px solid var(--border); border-top-color: var(--bob);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
 }
 
-/* ── FADE-UP ANIMATION ─────────────────────────────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(22px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
 .fade-up { animation: fadeUp 0.55s ease both; }
 
-/* ── PAGE LOADER ───────────────────────────────────────────────────────── */
-.page-loader {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--white);
-}
+.page-loader { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--white); }
 
-/* ── SKELETON LOADING ──────────────────────────────────────────────────── */
 @keyframes shimmer {
   from { background-position: -400px 0; }
   to   { background-position:  400px 0; }
 }
-
 .skeleton {
   background: linear-gradient(90deg, #f0ebe5 25%, #e8e2dc 50%, #f0ebe5 75%);
-  background-size: 800px 100%;
-  animation: shimmer 1.4s infinite;
-  border-radius: var(--r-sm);
+  background-size: 800px 100%; animation: shimmer 1.4s infinite; border-radius: var(--r-sm);
 }
 
-/* ── OVERLAY / MODAL BACKDROP ──────────────────────────────────────────── */
 .overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  z-index: 900;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  z-index: 900; display: flex; align-items: center; justify-content: center;
 }
 
-/* ── SPECIAL CLASS FOR LUXURY ACCENTS ──────────────────────────────────── */
-.text-luxury {
-  font-family: var(--font-display-ar);
-  font-style: italic;
-  font-size: 1.4rem;
-  color: var(--bob-light);
-}
+.text-luxury { font-family: var(--font-display-ar); font-style: italic; font-size: 1.4rem; color: var(--bob-light); }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   GLOBAL RESPONSIVE RULES
-   NOTE: Component-specific grids (p-grid, bp-grid, stats-grid, cart-layout,
-   wl-grid, products-grid inside Home.jsx) are defined inside each component's
-   <style> tag and CANNOT be overridden here. Add those breakpoints directly
-   in the component's own <style> block (see comments per component below).
+   RESPONSIVE
+   NOTE: .admin-content padding is intentionally NOT set here — it is
+   controlled entirely by AdminLayout.jsx to avoid specificity conflicts.
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* Shared layout helpers — these DO apply globally */
-@media (max-width: 1100px) {
-  /* .product-card grid used via the global .products-grid class only */
-  /* Component-specific grids override this in their own <style> tags */
-}
-
 @media (max-width: 600px) {
-  /* Global layout */
-  .section    { padding: 3rem 1rem; }
-  .container  { padding: 0 1rem; }
+  .section   { padding: 3rem 1rem; }
+  .container { padding: 0 1rem; }
 
-  /* Global page-hero tweaks (already handled above at 640px,
-     this catches edge cases between 600–640px) */
-  .page-hero          { padding: 2.8rem 1rem 2.2rem; }
-  .page-hero--sm      { padding: 2rem 1rem 1.6rem; }
+  .page-hero     { padding: 2.8rem 1rem 2.2rem; }
+  .page-hero--sm { padding: 2rem 1rem 1.6rem; }
   .page-hero__rule-line { width: 32px; }
 
-  /* Shared card body — used only if you ever use the global .card-body class */
   .card-body  { padding: 0.65rem 0.7rem 0.8rem; }
   .card-name  { font-size: 0.92rem; }
   .card-price { font-size: 0.95rem; }
-
-  /* Global admin-content padding — AdminLayout applies .admin-content */
-  .admin-content { padding: 0.75rem !important; }
 }
 
-/* ── PAGE-HERO mobile (already defined above, kept in one place) ─────── */
 @media (max-width: 640px) {
   .page-hero             { padding: 3rem 1.2rem 2.4rem; }
   .page-hero--sm         { padding: 2.2rem 1.2rem 1.8rem; }

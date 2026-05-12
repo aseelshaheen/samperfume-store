@@ -13,19 +13,21 @@ connectDB();
 
 const app = express();
 
-// ── CORS — must come BEFORE helmet and all routes ─────────────────────────────
-// helmet can strip or conflict with CORS headers if it runs first
 const corsOptions = {
-  origin: [
-    process.env.CLIENT_URL || "http://localhost:5173",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-  ],
+  origin: function(origin, callback) {
+    if (
+      !origin ||
+      origin.includes("localhost") ||
+      origin.includes("127.0.0.1") ||
+      origin.startsWith("http://192.168.")
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
 };
-
 app.use(cors(corsOptions));
 
 
@@ -63,6 +65,7 @@ app.use("/api/users",    require("./routes/userRoutes"));    // cart + wishlist
 app.use("/api/perfumes", require("./routes/perfumeRoutes"));
 app.use("/api/admin",    require("./routes/adminRoutes"));
 app.use("/api/orders",   require("./routes/orderRoutes"));
+app.use("/api/contact", require("./routes/contactRoutes"));
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get("/api/health", (req, res) => {
@@ -89,6 +92,7 @@ app.use((err, req, res, next) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-app.listen(5000, '0.0.0.0', () => {
-  console.log('Server running on port 5000');
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
 });

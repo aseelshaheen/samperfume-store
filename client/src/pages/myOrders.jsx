@@ -6,7 +6,7 @@ import {
   Truck, XCircle, RefreshCw, StickyNote, Sparkles,
 } from "lucide-react";
 
-const API = "/api";
+const API = import.meta.env.VITE_API_URL || "/api";;
 const getToken = () => localStorage.getItem("sp_token");
 const authHeaders = () => ({
   "Content-Type": "application/json",
@@ -91,7 +91,7 @@ function OrderCard({ order }) {
           {order.items?.slice(0, 3).map((item, i) => (
             <div key={i} style={{ width:46, height:46, borderRadius:2, overflow:"hidden", background:"#f7f0ec", border:"1px solid #e6ddd4", flexShrink:0 }}>
               {item.image
-                ? <img src={item.image} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                ? <img loading="lazy" src={item.image} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                 : <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center" }}><Package size={14} color="#c8b5a8" /></div>}
             </div>
           ))}
@@ -145,7 +145,7 @@ function OrderCard({ order }) {
                 <div key={i} style={{ display:"flex", gap:".8rem", alignItems:"center", background:"#faf7f4", borderRadius:2, padding:".65rem", border:"1px solid #f0e8e0" }}>
                   <div style={{ width:44, height:44, borderRadius:2, overflow:"hidden", background:"#f0ece8", flexShrink:0 }}>
                     {item.image
-                      ? <img src={item.image} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                      ? <img loading="lazy" src={item.image} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                       : <div style={{ width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center" }}><Package size={14} color="#c8b5a8" /></div>}
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>

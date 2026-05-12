@@ -12,7 +12,7 @@ import {
   ToggleRight,
 } from "lucide-react";
 
-const API = "/api";
+const API = import.meta.env.VITE_API_URL || "/api";;
 const authHeaders = () => ({
   "Content-Type": "application/json",
   Authorization: `Bearer ${localStorage.getItem("sp_token")}`,
@@ -20,6 +20,7 @@ const authHeaders = () => ({
 
 const EMPTY = {
   name: "",
+  nameAr: "",
   brand: "",
   perfumeType: "western",
   gender: "unisex",
@@ -29,7 +30,6 @@ const EMPTY = {
   fullBottle: { price: "", stock: "", size_ml: "" },
   taqseem: { sourceBottle_ml: "", sizes: [] },
   discount: 0,
-  // UI-only helper fields for the admin to enter original & discounted price
   _originalPrice: "",
   _discountedPrice: "",
   isFeatured: false,
@@ -63,21 +63,19 @@ function TaqseemSizes({ sizes, onChange }) {
             className="af-input"
             type="number"
             placeholder="مل"
-            value={s.ml}
+            value={s.ml ?? ""}
             onChange={(e) => update(i, "ml", e.target.value)}
           />
-          <input
-            className="af-input"
-            type="number"
-            placeholder="₪ السعر"
-            value={s.price}
+          <input className="af-input" type="text" inputMode="decimal" placeholder="₪ السعر"
+            
+            value={s.price ?? ""}
             onChange={(e) => update(i, "price", e.target.value)}
           />
           <input
             className="af-input"
             type="number"
             placeholder="مخزون"
-            value={s.stock}
+            value={s.stock ?? ""}
             onChange={(e) => update(i, "stock", e.target.value)}
           />
           <button type="button" className="ts-del" onClick={() => remove(i)}>
@@ -94,18 +92,38 @@ function TaqseemSizes({ sizes, onChange }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   When editing an existing perfume, populate the UI helper fields from the
-   stored fullBottle.price (original) and the computed discounted price.
-   ───────────────────────────────────────────────────────────────────────────── */
 function buildInitial(perfume) {
-  if (!perfume) return EMPTY;
+  if (!perfume) return { ...EMPTY };
   const orig = perfume.fullBottle?.price ?? "";
-  const disc = perfume.discount > 0 && orig !== ""
-    ? orig - (orig * perfume.discount / 100)
-    : "";
+  const disc =
+    perfume.discount > 0 && orig !== ""
+      ? orig - (orig * perfume.discount) / 100
+      : "";
   return {
+    ...EMPTY,
     ...perfume,
+    name:        perfume.name        ?? "",
+    nameAr:      perfume.nameAr      ?? "",
+    brand:       perfume.brand       ?? "",
+    description: perfume.description ?? "",
+    discount:    perfume.discount    ?? 0,
+    fullBottle: {
+      price:   perfume.fullBottle?.price   ?? "",
+      stock:   perfume.fullBottle?.stock   ?? "",
+      size_ml: perfume.fullBottle?.size_ml ?? "",
+    },
+    taqseem: {
+      sourceBottle_ml: perfume.taqseem?.sourceBottle_ml ?? "",
+      sizes: (perfume.taqseem?.sizes ?? []).map((s) => ({
+        ml:    s.ml    ?? "",
+        price: s.price ?? "",
+        stock: s.stock ?? "",
+      })),
+    },
+    images:
+      perfume.images?.length
+        ? perfume.images.map((img) => ({ ...img, url: img.url ?? "" }))
+        : [{ url: "", isMain: true }],
     _originalPrice:   orig !== "" ? String(orig) : "",
     _discountedPrice: disc !== "" ? String(disc) : "",
   };
@@ -113,6 +131,11 @@ function buildInitial(perfume) {
 
 function PerfumeForm({ initial, onSave, onCancel, saving }) {
   const [form, setForm] = useState(() => buildInitial(initial));
+
+  // Reset form when the perfume being edited changes
+  useEffect(() => {
+    setForm(buildInitial(initial));
+  }, [initial]);
 
   const set = (path, val) => {
     const parts = path.split(".");
@@ -123,7 +146,6 @@ function PerfumeForm({ initial, onSave, onCancel, saving }) {
     );
   };
 
-  /* Recalculate discount percentage whenever original or discounted price changes */
   const handleOriginalPrice = (rawVal) => {
     const orig = parseFloat(rawVal);
     const disc = parseFloat(form._discountedPrice);
@@ -134,7 +156,6 @@ function PerfumeForm({ initial, onSave, onCancel, saving }) {
     setForm((prev) => ({
       ...prev,
       _originalPrice: rawVal,
-      // fullBottle.price always stores the ORIGINAL (pre-discount) price
       fullBottle: { ...prev.fullBottle, price: rawVal },
       discount: pct,
     }));
@@ -147,17 +168,12 @@ function PerfumeForm({ initial, onSave, onCancel, saving }) {
       !isNaN(orig) && orig > 0 && !isNaN(disc) && disc >= 0 && disc < orig
         ? Math.round(((orig - disc) / orig) * 100)
         : 0;
-    setForm((prev) => ({
-      ...prev,
-      _discountedPrice: rawVal,
-      discount: pct,
-    }));
+    setForm((prev) => ({ ...prev, _discountedPrice: rawVal, discount: pct }));
   };
 
-  const showFull = ["full_only", "both"].includes(form.availability);
+  const showFull    = ["full_only", "both"].includes(form.availability);
   const showTaqseem = ["taqseem_only", "both"].includes(form.availability);
 
-  /* Strip UI-only helper fields before submitting */
   const handleSubmit = (e) => {
     e.preventDefault();
     const { _originalPrice, _discountedPrice, ...payload } = form;
@@ -166,27 +182,45 @@ function PerfumeForm({ initial, onSave, onCancel, saving }) {
 
   return (
     <form className="af-form" onSubmit={handleSubmit}>
+
+      {/* ── Names ── */}
       <div className="af-row-2">
         <div className="af-field">
-          <label className="af-label">اسم العطر *</label>
+          <label className="af-label">الاسم بالإنجليزية *</label>
           <input
             className="af-input"
             required
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
             placeholder="Bleu de Chanel"
+            dir="ltr"
+            style={{ textAlign: "left" }}
           />
         </div>
         <div className="af-field">
-          <label className="af-label">البراند *</label>
+          <label className="af-label">الاسم بالعربية</label>
           <input
             className="af-input"
-            required
-            value={form.brand}
-            onChange={(e) => set("brand", e.target.value)}
-            placeholder="Chanel"
+            value={form.nameAr}
+            onChange={(e) => set("nameAr", e.target.value)}
+            placeholder="بلو دي شانيل"
+            dir="rtl"
           />
         </div>
+      </div>
+
+      {/* ── Brand ── */}
+      <div className="af-field">
+        <label className="af-label">البراند *</label>
+        <input
+          className="af-input"
+          required
+          value={form.brand}
+          onChange={(e) => set("brand", e.target.value)}
+          placeholder="Chanel"
+          dir="ltr"
+          style={{ textAlign: "left" }}
+        />
       </div>
 
       <div className="af-row-3">
@@ -221,21 +255,10 @@ function PerfumeForm({ initial, onSave, onCancel, saving }) {
             onChange={(e) => set("fragranceFamily", e.target.value)}
           >
             {[
-              "oud",
-              "woody",
-              "floral",
-              "oriental",
-              "fresh",
-              "citrus",
-              "aquatic",
-              "gourmand",
-              "chypre",
-              "fougere",
-              "other",
+              "oud","woody","floral","oriental","fresh",
+              "citrus","aquatic","gourmand","chypre","fougere","other",
             ].map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
+              <option key={f} value={f}>{f}</option>
             ))}
           </select>
         </div>
@@ -313,17 +336,13 @@ function PerfumeForm({ initial, onSave, onCancel, saving }) {
         </div>
       )}
 
-      {/* ── Pricing section ── */}
+      {/* ── Pricing ── */}
       <div className="af-subsection">
         <div className="af-sub-title">التسعير</div>
         <div className="af-row-2">
           <div className="af-field">
-            {/* This value is saved as fullBottle.price — always the original price */}
             <label className="af-label">السعر الأصلي (₪) *</label>
-            <input
-              className="af-input"
-              type="number"
-              min="0"
+            <input className="af-input" type="text" inputMode="decimal"
               step="any"
               required={showFull}
               value={form._originalPrice}
@@ -332,12 +351,8 @@ function PerfumeForm({ initial, onSave, onCancel, saving }) {
             />
           </div>
           <div className="af-field">
-            {/* UI helper only — used to derive discount %. Not sent to backend directly. */}
             <label className="af-label">السعر بعد الخصم (₪)</label>
-            <input
-              className="af-input"
-              type="number"
-              min="0"
+            <input className="af-input" type="text" inputMode="decimal"
               step="any"
               value={form._discountedPrice}
               onChange={(e) => handleDiscountedPrice(e.target.value)}
@@ -345,14 +360,25 @@ function PerfumeForm({ initial, onSave, onCancel, saving }) {
             />
           </div>
         </div>
-
-        {/* Live discount preview */}
         {form.discount > 0 ? (
-          <div style={{ fontSize: "0.8rem", color: "#2e7d5a", fontWeight: 700, marginTop: "0.3rem", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+          <div
+            style={{
+              fontSize: "0.8rem",
+              color: "#2e7d5a",
+              fontWeight: 700,
+              marginTop: "0.3rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.35rem",
+            }}
+          >
             <span>✓</span>
             <span>
-              نسبة الخصم المحسوبة: {form.discount}% · السعر المعروض للعميل:{" "}
-              ₪{Math.round(parseFloat(form._originalPrice) - (parseFloat(form._originalPrice) * form.discount / 100))}
+              نسبة الخصم: {form.discount}% · السعر المعروض: ₪
+              {Math.round(
+                parseFloat(form._originalPrice) -
+                  (parseFloat(form._originalPrice) * form.discount) / 100,
+              )}
             </span>
           </div>
         ) : (
@@ -432,10 +458,7 @@ function PerfumeForm({ initial, onSave, onCancel, saving }) {
         </button>
         <button type="submit" className="af-save" disabled={saving}>
           {saving ? (
-            <Loader2
-              size={14}
-              style={{ animation: "spin 1s linear infinite" }}
-            />
+            <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
           ) : (
             <Save size={14} />
           )}
@@ -448,12 +471,12 @@ function PerfumeForm({ initial, onSave, onCancel, saving }) {
 
 export default function AdminPerfumes() {
   const [perfumes, setPerfumes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [search, setSearch] = useState("");
-  const [mode, setMode] = useState("list");
-  const [editing, setEditing] = useState(null);
-  const [toast, setToast] = useState(null);
+  const [loading,  setLoading]  = useState(true);
+  const [saving,   setSaving]   = useState(false);
+  const [search,   setSearch]   = useState("");
+  const [mode,     setMode]     = useState("list");
+  const [editing,  setEditing]  = useState(null);
+  const [toast,    setToast]    = useState(null);
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -463,9 +486,7 @@ export default function AdminPerfumes() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/perfumes?limit=100`, {
-        headers: authHeaders(),
-      });
+      const res  = await fetch(`${API}/perfumes?limit=100`, { headers: authHeaders() });
       const data = await res.json();
       if (data.success) setPerfumes(data.perfumes ?? []);
     } catch {
@@ -474,18 +495,14 @@ export default function AdminPerfumes() {
     setLoading(false);
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const handleSave = async (form) => {
     setSaving(true);
     try {
-      const url = editing
-        ? `${API}/perfumes/${editing._id}`
-        : `${API}/perfumes`;
+      const url    = editing ? `${API}/perfumes/${editing._id}` : `${API}/perfumes`;
       const method = editing ? "PUT" : "POST";
-      const res = await fetch(url, {
+      const res    = await fetch(url, {
         method,
         headers: authHeaders(),
         body: JSON.stringify(form),
@@ -496,7 +513,9 @@ export default function AdminPerfumes() {
         setMode("list");
         setEditing(null);
         load();
-      } else showToast(data.message ?? "خطأ", "error");
+      } else {
+        showToast(data.message ?? "خطأ", "error");
+      }
     } catch {
       showToast("خطأ في الاتصال", "error");
     }
@@ -506,15 +525,10 @@ export default function AdminPerfumes() {
   const handleDelete = async (id) => {
     if (!window.confirm("هل أنت متأكد من الحذف؟")) return;
     try {
-      const res = await fetch(`${API}/perfumes/${id}`, {
-        method: "DELETE",
-        headers: authHeaders(),
-      });
+      const res  = await fetch(`${API}/perfumes/${id}`, { method: "DELETE", headers: authHeaders() });
       const data = await res.json();
-      if (data.success) {
-        showToast("تم الحذف");
-        load();
-      } else showToast(data.message ?? "خطأ", "error");
+      if (data.success) { showToast("تم الحذف"); load(); }
+      else showToast(data.message ?? "خطأ", "error");
     } catch {
       showToast("خطأ", "error");
     }
@@ -528,148 +542,123 @@ export default function AdminPerfumes() {
         body: JSON.stringify({ isActive: !p.isActive }),
       });
       setPerfumes((prev) =>
-        prev.map((x) =>
-          x._id === p._id ? { ...x, isActive: !x.isActive } : x,
-        ),
+        prev.map((x) => x._id === p._id ? { ...x, isActive: !x.isActive } : x),
       );
     } catch {}
   };
 
-  const filtered = perfumes.filter(
-    (p) =>
-      p.name?.toLowerCase().includes(search.toLowerCase()) ||
-      p.brand?.toLowerCase().includes(search.toLowerCase()),
-  );
+  const q = search.toLowerCase().trim();
+  const filtered = q
+    ? perfumes.filter(
+        (p) =>
+          p.name?.toLowerCase().includes(q) ||
+          p.nameAr?.includes(search.trim()) ||
+          p.brand?.toLowerCase().includes(q),
+      )
+    : perfumes;
 
-const displayPrice = (p) => {
-  const base = p.fullBottle?.price;
-  if (!base) return "—";
-  if (p.discount > 0) {
-    const final = Math.round(base - (base * p.discount / 100));
-    return `₪${final} (خصم ${p.discount}%)`;
-  }
-  return `₪${Math.round(base)}`;
-};
+  const displayPrice = (p) => {
+    const base = p.fullBottle?.price;
+    if (!base) return "—";
+    if (p.discount > 0) {
+      const final = Math.round(base - (base * p.discount) / 100);
+      return `₪${final} (-${p.discount}%)`;
+    }
+    return `₪${Math.round(base)}`;
+  };
 
   return (
     <>
       <style>{`
         @keyframes spin { to { transform:rotate(360deg); } }
-
-        /* Form */
         .af-form { display:flex; flex-direction:column; gap:1.2rem; }
         .af-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
         .af-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; }
         .af-field { display:flex; flex-direction:column; gap:0.32rem; }
         .af-label { font-size:0.72rem; font-weight:700; color:#888; letter-spacing:0.06em; text-transform:uppercase; }
-
-        .af-input, .af-select, .af-textarea {
-          background:white; border:1.5px solid #e8e2dc; color:#1a1a1a;
-          font-family:'Tajawal',sans-serif; font-size:0.88rem;
-          padding:0.6rem 0.82rem; border-radius:5px; outline:none; transition:border-color 0.2s; width:100%;
-        }
+        .af-input, .af-select, .af-textarea { background:white; border:1.5px solid #e8e2dc; color:#1a1a1a; font-family:'Tajawal',sans-serif; font-size:0.88rem; padding:0.6rem 0.82rem; border-radius:5px; outline:none; transition:border-color 0.2s; width:100%; }
         .af-input:focus, .af-select:focus, .af-textarea:focus { border-color:#452829; box-shadow:0 0 0 3px rgba(69,40,41,0.07); }
         .af-textarea { resize:vertical; min-height:85px; }
         .af-select { appearance:none; cursor:pointer; }
-
         .af-subsection { background:#faf8f6; border:1px solid #e8e2dc; border-radius:8px; padding:1.1rem; }
-        .af-sub-title  { font-size:0.68rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#452829; margin-bottom:0.85rem; }
-
+        .af-sub-title { font-size:0.68rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#452829; margin-bottom:0.85rem; }
         .ts-row { display:grid; grid-template-columns:1fr 1fr 1fr 30px; gap:0.45rem; align-items:center; margin-bottom:0.45rem; }
         .ts-add { display:inline-flex; align-items:center; gap:0.3rem; background:rgba(69,40,41,0.08); border:1px solid rgba(69,40,41,0.2); color:#452829; font-family:'Tajawal',sans-serif; font-size:0.75rem; padding:0.28rem 0.7rem; border-radius:4px; cursor:pointer; transition:background 0.2s; margin-top:0.3rem; }
         .ts-add:hover { background:rgba(69,40,41,0.15); }
         .ts-del { background:rgba(192,57,43,0.08); border:none; color:#c0392b; cursor:pointer; border-radius:4px; padding:0.28rem; display:flex; align-items:center; justify-content:center; }
-
         .img-row { display:grid; grid-template-columns:1fr 30px; gap:0.45rem; align-items:center; margin-bottom:0.45rem; }
-
         .af-toggle { display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding-top:0.2rem; }
         .af-toggle span { font-size:0.85rem; color:#555; }
-
         .af-actions { display:flex; gap:0.8rem; justify-content:flex-end; padding-top:0.5rem; border-top:1px solid #e8e2dc; }
-
         .af-cancel { background:white; border:1.5px solid #e8e2dc; color:#888; font-family:'Tajawal',sans-serif; font-size:0.88rem; padding:0.62rem 1.4rem; border-radius:5px; cursor:pointer; transition:all 0.2s; }
         .af-cancel:hover { color:#1a1a1a; border-color:#ccc; }
-
         .af-save { background:#452829; border:none; color:white; font-family:'Tajawal',sans-serif; font-size:0.88rem; font-weight:700; padding:0.62rem 1.7rem; border-radius:5px; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:background 0.2s; }
         .af-save:hover { background:#5c3637; }
         .af-save:disabled { opacity:0.6; cursor:not-allowed; }
-
-        /* List */
         .pm-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.8rem; flex-wrap:wrap; gap:1rem; }
         .pm-heading { font-family:'Playfair Display',serif; font-size:1.4rem; color:#1a1a1a; font-weight:700; }
         .pm-actions { display:flex; gap:0.8rem; align-items:center; }
-
         .pm-search { position:relative; }
-        .pm-search input { background:white; border:1.5px solid #e8e2dc; color:#1a1a1a; font-family:'Tajawal',sans-serif; font-size:0.85rem; padding:0.55rem 2.2rem 0.55rem 0.85rem; border-radius:5px; outline:none; width:220px; transition:border-color 0.2s; }
+        .pm-search input { background:white; border:1.5px solid #e8e2dc; color:#1a1a1a; font-family:'Tajawal',sans-serif; font-size:0.85rem; padding:0.55rem 2.2rem 0.55rem 0.85rem; border-radius:5px; outline:none; width:240px; transition:border-color 0.2s; }
         .pm-search input:focus { border-color:#452829; }
         .pm-search-icon { position:absolute; right:0.65rem; top:50%; transform:translateY(-50%); color:#bbb; pointer-events:none; }
-
         .add-btn { display:flex; align-items:center; gap:0.4rem; background:#452829; border:none; color:white; font-family:'Tajawal',sans-serif; font-size:0.88rem; font-weight:700; padding:0.55rem 1.2rem; border-radius:5px; cursor:pointer; transition:background 0.2s; white-space:nowrap; }
         .add-btn:hover { background:#5c3637; }
-
         .pm-table-wrap { background:white; border:1px solid #e8e2dc; border-radius:10px; overflow:hidden; overflow-x:auto; }
-        .pm-table { width:100%; border-collapse:collapse; }
-        .pm-table thead th { background:#faf8f6; padding:0.75rem 1rem; font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#aaa; text-align:right; border-bottom:1px solid #e8e2dc; white-space:nowrap; }
-
-        .pm-row td { padding:0.88rem 1rem; border-bottom:1px solid #f5f1ed; font-size:0.84rem; vertical-align:middle; }
+        .pm-table { width:100%; border-collapse:collapse; table-layout:fixed; min-width:720px; }
+        .pm-table thead th { background:#faf8f6; padding:0.65rem 0.9rem; font-size:0.68rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#aaa; text-align:right; border-bottom:1.5px solid #e8e2dc; white-space:nowrap; overflow:hidden; }
+        .pm-row td { padding:0.75rem 0.9rem; border-bottom:1px solid #f5f1ed; font-size:0.82rem; vertical-align:middle; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .pm-row:last-child td { border-bottom:none; }
         .pm-row:hover td { background:#fdfcfb; }
-
-        .pm-img { width:42px; height:42px; border-radius:4px; object-fit:cover; }
-        .pm-img-ph { width:42px; height:42px; border-radius:4px; background:#f5f1ed; display:flex; align-items:center; justify-content:center; color:#ccc; }
-        .pm-name  { font-weight:600; color:#1a1a1a; display:block; }
-        .pm-brand { font-size:0.72rem; color:#aaa; }
-
-        .avail-badge { font-size:0.65rem; font-weight:700; padding:0.18rem 0.55rem; border-radius:2px; letter-spacing:0.04em; }
+        .pm-img { width:40px; height:40px; border-radius:5px; object-fit:cover; }
+        .pm-img-ph { width:40px; height:40px; border-radius:5px; background:#f5f1ed; display:flex; align-items:center; justify-content:center; color:#ccc; }
+        .pm-name { font-weight:600; color:#1a1a1a; display:block; font-size:0.84rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .pm-name-ar { font-size:0.72rem; color:#888; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .pm-brand { font-size:0.78rem; color:#666; }
+        .avail-badge { font-size:0.63rem; font-weight:700; padding:0.18rem 0.5rem; border-radius:3px; letter-spacing:0.03em; }
         .av-full    { background:rgba(69,40,41,0.1); color:#452829; }
         .av-taqseem { background:#eff4ff; color:#1e4db7; }
         .av-both    { background:#f0fdf4; color:#2e7d5a; }
-
         .toggle-btn { cursor:pointer; background:none; border:none; display:flex; align-items:center; }
-        .pm-edit { background:none; border:none; color:#aaa; cursor:pointer; padding:0.3rem; border-radius:4px; display:inline-flex; transition:all 0.2s; }
+        .pm-edit { background:none; border:none; color:#bbb; cursor:pointer; padding:0.28rem; border-radius:4px; display:inline-flex; transition:all 0.2s; }
         .pm-edit:hover { color:#1a1a1a; background:#f5f1ed; }
-        .pm-del  { background:none; border:none; color:#ccc; cursor:pointer; padding:0.3rem; border-radius:4px; display:inline-flex; transition:all 0.2s; }
-        .pm-del:hover  { color:#c0392b; background:#fef2f2; }
-
-        /* Form panel */
+        .pm-del { background:none; border:none; color:#ddd; cursor:pointer; padding:0.28rem; border-radius:4px; display:inline-flex; transition:all 0.2s; }
+        .pm-del:hover { color:#c0392b; background:#fef2f2; }
         .form-panel { background:white; border:1px solid #e8e2dc; border-radius:10px; padding:1.8rem; }
         .form-panel-title { font-family:'Playfair Display',serif; font-size:1.1rem; color:#1a1a1a; font-weight:600; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid #e8e2dc; display:flex; align-items:center; justify-content:space-between; }
         .fp-close { background:none; border:none; color:#aaa; cursor:pointer; }
         .fp-close:hover { color:#1a1a1a; }
-
-        /* Toast */
         .admin-toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%); padding:0.75rem 1.5rem; border-radius:6px; font-size:0.88rem; font-weight:600; z-index:9999; white-space:nowrap; animation:slideUp 0.3s ease; font-family:'Tajawal',sans-serif; }
         .admin-toast.success { background:#2e7d5a; color:white; }
-        .admin-toast.error   { background:#c0392b; color:white; }
+        .admin-toast.error { background:#c0392b; color:white; }
         @keyframes slideUp { from { opacity:0; transform:translateX(-50%) translateY(10px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
-
         .empty-pm { text-align:center; padding:3rem; color:#aaa; }
         .empty-pm p { margin-top:0.5rem; font-size:0.88rem; }
+
         @media(max-width:600px){
-  .pm-header{flex-direction:column;align-items:flex-start;gap:0.65rem;margin-bottom:1rem;}
-  .pm-heading{font-size:1.1rem;}
-  .pm-actions{width:100%;display:flex;gap:0.5rem;}
-  .pm-search{flex:1;}
-  .pm-search input{width:100%;font-size:0.8rem;}
-  .add-btn{font-size:0.8rem;padding:0.45rem 0.85rem;white-space:nowrap;}
-  .pm-table-wrap{overflow-x:auto;}
-  .pm-table{min-width:620px;}
-  .pm-table thead th{padding:0.55rem 0.7rem;font-size:0.62rem;}
-  .pm-row td{padding:0.6rem 0.7rem;font-size:0.78rem;}
-  .pm-img{width:34px;height:34px;}
-  .pm-img-ph{width:34px;height:34px;}
-  .avail-badge{font-size:0.6rem;padding:0.14rem 0.4rem;}
-  .form-panel{padding:1rem;}
-  .form-panel-title{font-size:0.95rem;margin-bottom:1rem;padding-bottom:0.75rem;}
-  .af-row-2{grid-template-columns:1fr;}
-  .af-row-3{grid-template-columns:1fr 1fr;}
-  .af-input,.af-select,.af-textarea{font-size:0.84rem;padding:0.52rem 0.7rem;}
-  .af-label{font-size:0.65rem;}
-  .af-subsection{padding:0.85rem;}
-  .ts-row{grid-template-columns:1fr 1fr 1fr 26px;gap:0.35rem;}
-  .af-actions{gap:0.55rem;}
-  .af-cancel,.af-save{font-size:0.82rem;padding:0.52rem 1rem;}
-}
+          .pm-header{flex-direction:column;align-items:flex-start;gap:0.65rem;margin-bottom:1rem;}
+          .pm-heading{font-size:1.1rem;}
+          .pm-actions{width:100%;display:flex;gap:0.5rem;}
+          .pm-search{flex:1;}
+          .pm-search input{width:100%;font-size:0.8rem;}
+          .add-btn{font-size:0.8rem;padding:0.45rem 0.85rem;}
+          .pm-table-wrap{overflow-x:auto;}
+          .pm-table{min-width:700px;}
+          .pm-table thead th{padding:0.5rem 0.65rem;font-size:0.6rem;}
+          .pm-row td{padding:0.55rem 0.65rem;font-size:0.76rem;}
+          .pm-img,.pm-img-ph{width:32px;height:32px;}
+          .avail-badge{font-size:0.58rem;padding:0.12rem 0.38rem;}
+          .form-panel{padding:1rem;}
+          .form-panel-title{font-size:0.95rem;margin-bottom:1rem;padding-bottom:0.75rem;}
+          .af-row-2{grid-template-columns:1fr;}
+          .af-row-3{grid-template-columns:1fr 1fr;}
+          .af-input,.af-select,.af-textarea{font-size:0.84rem;padding:0.52rem 0.7rem;}
+          .af-label{font-size:0.65rem;}
+          .af-subsection{padding:0.85rem;}
+          .ts-row{grid-template-columns:1fr 1fr 1fr 26px;gap:0.35rem;}
+          .af-actions{gap:0.55rem;}
+          .af-cancel,.af-save{font-size:0.82rem;padding:0.52rem 1rem;}
+        }
       `}</style>
 
       {toast && <div className={`admin-toast ${toast.type}`}>{toast.msg}</div>}
@@ -682,17 +671,14 @@ const displayPrice = (p) => {
               <div className="pm-search">
                 <Search size={14} className="pm-search-icon" />
                 <input
-                  placeholder="بحث..."
+                  placeholder="بحث بالاسم أو البراند..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
               <button
                 className="add-btn"
-                onClick={() => {
-                  setEditing(null);
-                  setMode("add");
-                }}
+                onClick={() => { setEditing(null); setMode("add"); }}
               >
                 <Plus size={15} /> إضافة عطر
               </button>
@@ -702,13 +688,7 @@ const displayPrice = (p) => {
           <div className="pm-table-wrap">
             {loading ? (
               <div className="empty-pm">
-                <Loader2
-                  size={24}
-                  style={{
-                    animation: "spin 1s linear infinite",
-                    color: "#452829",
-                  }}
-                />
+                <Loader2 size={24} style={{ animation: "spin 1s linear infinite", color: "#452829" }} />
                 <p>جاري التحميل...</p>
               </div>
             ) : filtered.length === 0 ? (
@@ -718,6 +698,17 @@ const displayPrice = (p) => {
               </div>
             ) : (
               <table className="pm-table">
+                <colgroup>
+                  <col style={{ width: "50px" }} />
+                  <col style={{ width: "180px" }} />
+                  <col style={{ width: "90px" }} />
+                  <col style={{ width: "65px" }} />
+                  <col style={{ width: "75px" }} />
+                  <col style={{ width: "120px" }} />
+                  <col style={{ width: "55px" }} />
+                  <col style={{ width: "48px" }} />
+                  <col style={{ width: "68px" }} />
+                </colgroup>
                 <thead>
                   <tr>
                     <th>صورة</th>
@@ -734,46 +725,42 @@ const displayPrice = (p) => {
                 <tbody>
                   {filtered.map((p) => {
                     const img =
-                      p.images?.find((i) => i.isMain)?.url ??
-                      p.images?.[0]?.url;
+                      p.images?.find((i) => i.isMain)?.url ?? p.images?.[0]?.url;
                     const avClass =
-                      p.availability === "full_only"
-                        ? "av-full"
-                        : p.availability === "taqseem_only"
-                          ? "av-taqseem"
-                          : "av-both";
+                      p.availability === "full_only" ? "av-full"
+                      : p.availability === "taqseem_only" ? "av-taqseem"
+                      : "av-both";
                     const avLabel =
-                      p.availability === "full_only"
-                        ? "كاملة"
-                        : p.availability === "taqseem_only"
-                          ? "تقسيمة"
-                          : "كليهما";
+                      p.availability === "full_only" ? "كاملة"
+                      : p.availability === "taqseem_only" ? "تقسيمة"
+                      : "كليهما";
                     return (
                       <tr key={p._id} className="pm-row">
                         <td>
                           {img ? (
-                            <img src={img} alt="" className="pm-img" />
+                            <img loading="lazy" src={img} alt="" className="pm-img" />
                           ) : (
                             <div className="pm-img-ph">
-                              <Package size={16} />
+                              <Package size={15} />
                             </div>
                           )}
                         </td>
                         <td>
                           <span className="pm-name">{p.name}</span>
+                          {p.nameAr && p.nameAr.trim() !== "" && (
+                            <span className="pm-name-ar">{p.nameAr}</span>
+                          )}
                         </td>
                         <td>
                           <span className="pm-brand">{p.brand}</span>
                         </td>
                         <td>
-                          <span style={{ fontSize: "0.78rem", color: "#aaa" }}>
+                          <span style={{ fontSize: "0.76rem", color: "#888" }}>
                             {p.perfumeType === "arabic" ? "عربي" : "أجنبي"}
                           </span>
                         </td>
                         <td>
-                          <span className={`avail-badge ${avClass}`}>
-                            {avLabel}
-                          </span>
+                          <span className={`avail-badge ${avClass}`}>{avLabel}</span>
                         </td>
                         <td>
                           <span style={{ color: "#452829", fontWeight: 700, fontSize: "0.8rem" }}>
@@ -781,15 +768,12 @@ const displayPrice = (p) => {
                           </span>
                         </td>
                         <td>
-                          <span style={{ color: "#888", fontSize: "0.82rem" }}>
+                          <span style={{ color: "#888", fontSize: "0.8rem" }}>
                             {p.fullBottle?.stock ?? 0}
                           </span>
                         </td>
                         <td>
-                          <button
-                            className="toggle-btn"
-                            onClick={() => handleToggle(p)}
-                          >
+                          <button className="toggle-btn" onClick={() => handleToggle(p)}>
                             {p.isActive ? (
                               <ToggleRight size={22} color="#2e7d5a" />
                             ) : (
@@ -797,22 +781,21 @@ const displayPrice = (p) => {
                             )}
                           </button>
                         </td>
-                        <td style={{ display: "flex", gap: "0.3rem" }}>
-                          <button
-                            className="pm-edit"
-                            onClick={() => {
-                              setEditing(p);
-                              setMode("edit");
-                            }}
-                          >
-                            <Pencil size={15} />
-                          </button>
-                          <button
-                            className="pm-del"
-                            onClick={() => handleDelete(p._id)}
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                        <td>
+                          <div style={{ display: "flex", gap: "0.2rem" }}>
+                            <button
+                              className="pm-edit"
+                              onClick={() => { setEditing(p); setMode("edit"); }}
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              className="pm-del"
+                              onClick={() => handleDelete(p._id)}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -830,10 +813,7 @@ const displayPrice = (p) => {
             </span>
             <button
               className="fp-close"
-              onClick={() => {
-                setMode("list");
-                setEditing(null);
-              }}
+              onClick={() => { setMode("list"); setEditing(null); }}
             >
               <X size={18} />
             </button>
@@ -841,10 +821,7 @@ const displayPrice = (p) => {
           <PerfumeForm
             initial={editing ?? null}
             onSave={handleSave}
-            onCancel={() => {
-              setMode("list");
-              setEditing(null);
-            }}
+            onCancel={() => { setMode("list"); setEditing(null); }}
             saving={saving}
           />
         </div>

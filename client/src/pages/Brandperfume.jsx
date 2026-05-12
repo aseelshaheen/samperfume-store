@@ -5,7 +5,7 @@ import {
   Wind, Loader2, ChevronDown, SlidersHorizontal, X
 } from "lucide-react";
 
-const API = "/api";
+const API = import.meta.env.VITE_API_URL || "/api";;
 
 const fetcher = async (url) => {
   const res = await fetch(url);
@@ -60,7 +60,7 @@ function PerfumeCard({ p, section }) {
     <div className="bp-card" onClick={goToDetail} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
       <div className="bp-card-img-wrap">
         {mainImg
-          ? <img src={mainImg} alt={p.name} className="bp-card-img" style={{ transform: hovered ? "scale(1.06)" : "scale(1)" }} />
+          ? <img loading="lazy" src={mainImg} alt={p.name} className="bp-card-img" style={{ transform: hovered ? "scale(1.06)" : "scale(1)" }} />
           : <div className="bp-card-img-ph"><Package size={32} strokeWidth={1} /></div>}
         {p.isFeatured && <span className="bp-tag featured">مميز</span>}
         {p.discount > 0 && <span className="bp-tag discount">-{p.discount}%</span>}
@@ -287,7 +287,7 @@ export default function BrandPerfumes() {
           <h1 className="bp-title">عطور {brandName}</h1>
           <div className="bp-section-tabs">
             <button className={`bp-tab ${activeSection === "full" ? "active" : ""}`} onClick={() => setActiveSection("full")}>
-              <Package size={15} /> القوارير الكاملة <span className="bp-tab-count">{fullBottles.length}</span>
+              <Package size={15} /> العطور الكاملة <span className="bp-tab-count">{fullBottles.length}</span>
             </button>
             <button className={`bp-tab ${activeSection === "taqseem" ? "active" : ""}`} onClick={() => setActiveSection("taqseem")}>
               <Layers size={15} /> التقسيمات <span className="bp-tab-count">{taqseemBottles.length}</span>
@@ -342,7 +342,7 @@ export default function BrandPerfumes() {
             <div className="bp-section-head">
               <div className="bp-section-head-left">
                 <div className="bp-section-icon">{activeSection === "full" ? <Package size={14} /> : <Layers size={14} />}</div>
-                <h2>{activeSection === "full" ? "القوارير الكاملة" : "التقسيمات"}</h2>
+                <h2>{activeSection === "full" ? "العطور الكاملة" : "التقسيمات"}</h2>
                 <span className="bp-section-count">{displayed.length} عطر</span>
               </div>
             </div>

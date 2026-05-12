@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Search, Users, ToggleLeft, ToggleRight, Loader2 } from "lucide-react";
 
-const API = "/api";
+const API = import.meta.env.VITE_API_URL || "/api";;
 const authHeaders = () => ({ "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("sp_token")}` });
 
 export default function AdminUsers() {

@@ -31,6 +31,12 @@ const perfumeSchema = new mongoose.Schema(
       trim: true,
     },
 
+    nameAr: {
+  type: String,
+  trim: true,
+  default: "",
+},
+
     brand: {
       type: String,
       required: [true, "البراند مطلوب"],
@@ -149,7 +155,7 @@ perfumeSchema.methods.recalcRating = function () {
 };
 
 // ── INDEXES ───────────────────────────────────────────────────────────────────
-perfumeSchema.index({ name: "text", brand: "text", description: "text" });
+perfumeSchema.index({ name: "text", nameAr: "text", brand: "text", description: "text" });
 perfumeSchema.index({ availability: 1 });
 perfumeSchema.index({ perfumeType: 1 });
 perfumeSchema.index({ gender: 1 });

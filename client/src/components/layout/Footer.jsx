@@ -1,5 +1,6 @@
 import { Phone, Mail, MapPin } from "lucide-react";
-import { FaInstagram, FaFacebook } from "react-icons/fa";
+import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa";
+import logo from "/logo2.webp";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -13,152 +14,134 @@ export default function Footer() {
           font-family: 'Tajawal', sans-serif;
           direction: rtl;
           border-top: 1px solid #f0ebe5;
-          padding-top: 4rem;
+          padding: 3rem 0 1.5rem 0; /* Reduced padding */
         }
 
         .footer-container {
-          max-width: 1200px;
+          max-width: 1100px;
           margin: 0 auto;
           padding: 0 2rem;
-          display: grid;
-          grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
-          gap: 4rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          flex-wrap: wrap;
+          gap: 2rem;
         }
 
-        /* Brand Section */
-        .f-brand .f-logo {
-          font-family: 'Amiri', serif;
-          font-size: 1.8rem;
-          color: #452829;
-          display: block;
-          margin-bottom: 0.5rem;
-        }
-
-        .f-brand .f-tagline {
-          font-size: 0.7rem;
-          letter-spacing: 0.2em;
-          color: #aaa;
-          text-transform: uppercase;
-          display: block;
-          margin-bottom: 1.5rem;
-        }
-
-        /* Column Styles */
-        .footer-col h4 {
-          font-family: 'Amiri', serif;
-          font-size: 1.1rem;
+        .f-brand { flex: 1.5; min-width: 200px; }
+        .f-logo {
+          font-family: 'Playfair Display', serif;
+          font-size: 1.5rem;
           font-weight: 700;
           color: #452829;
-          margin-bottom: 1.5rem;
+          letter-spacing: 1px;
+          display: block;
         }
 
-        .footer-col ul { list-style: none; padding: 0; margin: 0; }
-        .footer-col ul li { margin-bottom: 0.8rem; }
-        
-        .footer-col ul a {
-          color: #777;
-          font-size: 0.9rem;
-          transition: color 0.3s ease;
+        .f-tagline {
+          font-size: 0.7rem;
+          color: #999;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin-top: 0.2rem;
         }
 
-        .footer-col ul a:hover { color: #452829; }
-
-        /* Social & Contact Icons */
-        .social-links { display: flex; gap: 1.2rem; margin-top: 0.5rem; }
-        .social-links a { color: #aaa; transition: color 0.3s; }
-        .social-links a:hover { color: #452829; }
-
-        .contact-item {
-          display: flex;
-          align-items: center;
-          gap: 0.8rem;
-          color: #777;
+        .footer-col { flex: 1; min-width: 150px; }
+        .footer-col h4 {
           font-size: 0.85rem;
-          margin-bottom: 1rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          color: #452829;
+          margin-bottom: 1.2rem;
+          letter-spacing: 0.05em;
         }
 
-        .contact-item svg { color: #452829; opacity: 0.6; }
+        .footer-col ul { list-style: none; padding: 0; }
+        .footer-col li { margin-bottom: 0.6rem; }
+        .footer-col a {
+          color: #666;
+          font-size: 0.85rem;
+          text-decoration: none;
+          transition: 0.3s;
+        }
+        .footer-col a:hover { color: #9d8461; padding-right: 4px; }
 
-        /* Footer Bottom */
+        .contact-box { font-size: 0.85rem; color: #666; }
+        .contact-item { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; }
+        .contact-item svg { color: #9d8461; }
+
+        .social-links { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .social-links a { 
+          width: 32px; height: 32px; border: 1px solid #eee; 
+          border-radius: 50%; display: flex; align-items: center; 
+          justify-content: center; color: #452829; transition: 0.3s;
+        }
+        .social-links a:hover { background: #452829; color: #fff; border-color: #452829; }
+
         .footer-bottom {
-          margin-top: 5rem;
-          padding: 2rem;
-          border-top: 1px solid #f0ebe5;
+          max-width: 1100px;
+          margin: 2rem auto 0 auto;
+          padding: 1.5rem 2rem 0 2rem;
+          border-top: 1px solid #f9f6f2;
           display: flex;
           justify-content: space-between;
           align-items: center;
           font-size: 0.75rem;
           color: #aaa;
         }
+          .f-brand-top{
+  display:flex;
+  align-items:center;
+  gap:0.55rem;
+}
 
-        .cod-notice {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: #452829;
-          font-weight: 600;
-          letter-spacing: 0.05em;
-        }
+.f-brand-logo{
+  width:50px;
+  height:50px;
+  object-fit:contain;
+}
 
-        @media (max-width: 850px) {
-          .footer-container { grid-template-columns: 1fr 1fr; gap: 2.5rem; }
-          .f-brand { grid-column: 1 / -1; text-align: center; }
-          .social-links { justify-content: center; }
-          .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
+
+        @media (max-width: 768px) {
+          .footer-container { flex-direction: column; text-align: center; align-items: center; }
+          .contact-item { justify-content: center; }
+          .footer-bottom { flex-direction: column; gap: 1rem; }
         }
       `}</style>
 
       <footer className="footer">
         <div className="footer-container">
-          {/* Identity */}
-          <div className="f-brand">
-            <span className="f-logo">SamPerfume</span>
-            <span className="f-tagline">Luxurious Scents — Est. 2020</span>
-            <div className="social-links">
-              <a href="#"><FaInstagram size={18} /></a>
-              <a href="#"><FaFacebook size={18} /></a>
+<div className="f-brand">
+  <div className="f-brand-top">
+    <span className="f-logo">SAM PERFUME</span>
+    <img loading="lazy" src={logo} alt="SamPerfume" className="f-brand-logo" />
+    
+  </div>
+          </div>
+
+          <div className="footer-col">
+            <h4>روابط سريعة</h4>
+            <ul>
+              <li><a href="/shop">المتجر</a></li>
+              <li><a href="/returns">سياسة الإرجاع</a></li>
+            </ul>
+          </div>
+
+          <div className="footer-col">
+            <h4>تواصل معنا</h4>
+            <div className="contact-box">
+              <div className="contact-item"><Phone size={12} /><span>+970 59 907 7193</span></div>
+              <div className="contact-item"><Mail size={12} /><span>samperfume8@gmail.com</span></div>
+              <div className="contact-item"><MapPin size={12} /><span>سلفيت, فلسطين</span></div>
             </div>
-          </div>
-
-          {/* Shop */}
-          <div className="footer-col">
-            <h4>اكتشف</h4>
-            <ul>
-              <li><a href="#">العطور الرجالية</a></li>
-              <li><a href="#">العطور النسائية</a></li>
-              <li><a href="#">إصدارات النيش</a></li>
-              <li><a href="#">وصلنا حديثاً</a></li>
-            </ul>
-          </div>
-
-          {/* Info */}
-          <div className="footer-col">
-            <h4>المساعدة</h4>
-            <ul>
-              <li><a href="#">تتبع طلبك</a></li>
-              <li><a href="#">سياسة الإرجاع</a></li>
-              <li><a href="#">الخصوصية</a></li>
-              <li><a href="#">الأسئلة الشائعة</a></li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div className="footer-col">
-            <h4>اتصال</h4>
-            <div className="contact-item"><Phone size={14} /><span>+970 56 000 000</span></div>
-            <div className="contact-item"><Mail size={14} /><span>info@samperfume.ps</span></div>
-            <div className="contact-item"><MapPin size={14} /><span>سلفيت, فلسطين</span></div>
           </div>
         </div>
 
         <div className="footer-bottom">
-          <div className="cod-notice">
-            <span>الدفع عند الاستلام فقط</span>
-            <div style={{width: 4, height: 4, background: '#452829', borderRadius: '50%'}}></div>
-            <span>التوصيل لكافة المدن</span>
+          <span>© {year} SamPerfume. جميع الحقوق محفوظة.</span>
+          <div style={{display: 'flex', gap: '1rem'}}>
+            <span>الدفع عند الاستلام</span>
           </div>
-          
-          <span>© {year} SamPerfume. الحقوق محفوظة.</span>
         </div>
       </footer>
     </>

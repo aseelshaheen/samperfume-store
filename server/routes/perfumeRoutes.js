@@ -47,7 +47,7 @@ router.post("/:id/reviews", protect, async (req, res) => {
       });
       await transporter.sendMail({
         from:    `"متجر العطور" <${process.env.ADMIN_EMAIL}>`,
-        to:      "aseelshaheen080@gmail.com",
+        to:      "samperfume8@gmail.com",
         subject: `🌟 تقييم جديد بانتظار المراجعة — ${perfume.name}`,
         html: `
           <div dir="rtl" style="font-family:Arial,sans-serif;max-width:600px;margin:auto;border:1px solid #e8e2dc;border-radius:8px;overflow:hidden;">

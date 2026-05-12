@@ -131,7 +131,7 @@ const getWishlist = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate(
       "wishlist",
-      "name brand images availability fullBottle taqseem discount rating reviewCount"
+      "name brand images availability fullBottle taqseem discount rating reviewCount slug"
     );
     res.json({ success: true, wishlist: user.wishlist });
   } catch (err) {

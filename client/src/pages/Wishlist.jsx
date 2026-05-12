@@ -1,9 +1,18 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heart, Package, ShoppingBag, Loader2, Trash2, ArrowLeft, Sparkles } from "lucide-react";
+import {
+  Heart,
+  Package,
+  ShoppingBag,
+  Loader2,
+  Trash2,
+  ArrowLeft,
+  Sparkles,
+  Eye,
+} from "lucide-react";
 import { guestCartAdd } from "./Cart";
 
-const API = "/api";
+const API = import.meta.env.VITE_API_URL || "/api";;
 const getToken = () => localStorage.getItem("sp_token");
 const authHeaders = () => ({
   "Content-Type": "application/json",
@@ -12,17 +21,22 @@ const authHeaders = () => ({
 
 export default function Wishlist() {
   const navigate = useNavigate();
-  const [items,   setItems]   = useState([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [adding,  setAdding]  = useState({});
+  const [adding, setAdding] = useState({});
   const [removing, setRemoving] = useState({});
 
   useEffect(() => {
-    if (!getToken()) { navigate("/auth"); return; }
+    if (!getToken()) {
+      navigate("/auth");
+      return;
+    }
     const load = async () => {
       setLoading(true);
       try {
-        const res  = await fetch(`${API}/users/wishlist`, { headers: authHeaders() });
+        const res = await fetch(`${API}/users/wishlist`, {
+          headers: authHeaders(),
+        });
         const data = await res.json();
         if (data.success) setItems(data.wishlist ?? []);
       } catch {}
@@ -32,42 +46,58 @@ export default function Wishlist() {
   }, []);
 
   const removeFromWishlist = async (perfumeId) => {
-    setRemoving(r => ({ ...r, [perfumeId]: true }));
-    await new Promise(res => setTimeout(res, 280));
+    setRemoving((r) => ({ ...r, [perfumeId]: true }));
+    await new Promise((res) => setTimeout(res, 280));
     try {
-      const res  = await fetch(`${API}/users/wishlist/${perfumeId}`, { method: "POST", headers: authHeaders() });
+      const res = await fetch(`${API}/users/wishlist/${perfumeId}`, {
+        method: "POST",
+        headers: authHeaders(),
+      });
       const data = await res.json();
-      if (data.success) setItems(prev => prev.filter(p => p._id !== perfumeId));
+      if (data.success)
+        setItems((prev) => prev.filter((p) => p._id !== perfumeId));
     } catch {
-      setRemoving(r => ({ ...r, [perfumeId]: false }));
+      setRemoving((r) => ({ ...r, [perfumeId]: false }));
     }
   };
 
   const addToCart = async (perfume) => {
-    setAdding(a => ({ ...a, [perfume._id]: true }));
+    setAdding((a) => ({ ...a, [perfume._id]: true }));
     if (getToken()) {
       try {
         await fetch(`${API}/users/cart`, {
-          method: "POST", headers: authHeaders(),
+          method: "POST",
+          headers: authHeaders(),
           body: JSON.stringify({
             perfumeId: perfume._id,
-            section: perfume.availability === "taqseem_only" ? "taqseem" : "full",
+            section:
+              perfume.availability === "taqseem_only" ? "taqseem" : "full",
             quantity: 1,
           }),
         });
       } catch {}
     } else {
-      guestCartAdd({ perfumeId: perfume._id, slug: perfume.slug, name: perfume.name, brand: perfume.brand, section: perfume.availability === "taqseem_only" ? "taqseem" : "full", size: null, quantity: 1 });
+      guestCartAdd({
+        perfumeId: perfume._id,
+        slug: perfume.slug,
+        name: perfume.name,
+        brand: perfume.brand,
+        section: perfume.availability === "taqseem_only" ? "taqseem" : "full",
+        size: null,
+        quantity: 1,
+      });
     }
-    setTimeout(() => setAdding(a => ({ ...a, [perfume._id]: false })), 1800);
+    setTimeout(() => setAdding((a) => ({ ...a, [perfume._id]: false })), 1800);
   };
 
- const getPrice = (p) => {
-  if (!p) return null;
-  const base = p.fullBottle?.price;
-  if (!base) return null;
-  return p.discount >= 1 ? Math.round(base - (base * p.discount / 100)) : base;
-};
+  const getPrice = (p) => {
+    if (!p) return null;
+    const base = p.fullBottle?.price;
+    if (!base) return null;
+    return p.discount >= 1
+      ? Math.round(base - (base * p.discount) / 100)
+      : base;
+  };
   return (
     <>
       <style>{`
@@ -158,75 +188,125 @@ export default function Wishlist() {
       `}</style>
 
       {/* Hero */}
-<header class="page-hero">
-  <div class="page-hero__pattern"></div>
-  <div class="page-hero__glow"></div>
-  <div class="page-hero__inner">
-    <span class="page-hero__eyebrow">
-     مجموعتك المفضلة
-    </span>
-    <h1 class="page-hero__title">قائمة المفضلة</h1>
-    <p class="page-hero__sub">العطور التي تسحرك، في مكان واحد</p>
-    <div class="page-hero__rule">
-      <div class="page-hero__rule-line"></div>
-      <div class="page-hero__rule-dot"></div>
-      <div class="page-hero__rule-line"></div>
-    </div>
-  </div>
-</header>
+      <header ClassName="page-hero">
+        <div ClassName="page-hero__pattern"></div>
+        <div ClassName="page-hero__glow"></div>
+        <div ClassName="page-hero__inner">
+          <span class="page-hero__eyebrow">مجموعتك المفضلة</span>
+          <h1 ClassName="page-hero__title">قائمة المفضلة</h1>
+          <p ClassName="page-hero__sub">العطور التي تسحرك، في مكان واحد</p>
+          <div ClassName="page-hero__rule">
+            <div ClassName="page-hero__rule-line"></div>
+            <div ClassName="page-hero__rule-dot"></div>
+            <div ClassName="page-hero__rule-line"></div>
+          </div>
+        </div>
+      </header>
 
       {/* Toolbar */}
       <div className="wl-toolbar">
-        <div className="wl-count-pill"><Heart size={12} fill="#452829" color="#452829" /> {items.length} عطر محفوظ</div>
-        <button className="wl-back" onClick={() => navigate("/shop")}><ArrowLeft size={13} /> متابعة التسوق</button>
+        <div className="wl-count-pill">
+          <Heart size={12} fill="#452829" color="#452829" /> {items.length} عطر
+          محفوظ
+        </div>
+        <button className="wl-back" onClick={() => navigate("/shop")}>
+          <ArrowLeft size={13} /> متابعة التسوق
+        </button>
       </div>
 
       <div className="wl-wrap">
         {loading ? (
-          <div style={{ display:"flex", justifyContent:"center", padding:"5rem", color:"#452829" }}>
-            <Loader2 size={28} style={{ animation:"spin 1s linear infinite" }} />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              padding: "5rem",
+              color: "#452829",
+            }}
+          >
+            <Loader2
+              size={28}
+              style={{ animation: "spin 1s linear infinite" }}
+            />
           </div>
         ) : items.length === 0 ? (
           <div className="wl-empty">
-            <div className="wl-empty-ring"><Heart size={34} strokeWidth={1} color="#452829" /></div>
+            <div className="wl-empty-ring">
+              <Heart size={34} strokeWidth={1} color="#452829" />
+            </div>
             <h2>قائمتك فارغة</h2>
             <p>احفظ العطور التي تعجبك لتجدها بسرعة وتطلبها لاحقاً</p>
-            <button className="wl-empty-cta" onClick={() => navigate("/shop")}>اكتشف عطورنا</button>
+            <button className="wl-empty-cta" onClick={() => navigate("/shop")}>
+              اكتشف عطورنا
+            </button>
           </div>
         ) : (
           <div className="wl-grid">
-            {items.map(perfume => {
-              const price   = getPrice(perfume);
-              const orig = perfume.discount > 0 ? Math.ceil(perfume.fullBottle?.price) : null;
-              const img     = perfume.images?.find(i => i.isMain)?.url ?? perfume.images?.[0]?.url;
+            {items.map((perfume) => {
+              const price = getPrice(perfume);
+              const orig =
+                perfume.discount > 0
+                  ? Math.ceil(perfume.fullBottle?.price)
+                  : null;
+              const img =
+                perfume.images?.find((i) => i.isMain)?.url ??
+                perfume.images?.[0]?.url;
               const isAdded = adding[perfume._id];
-              const isOut   = removing[perfume._id];
+              const isOut = removing[perfume._id];
 
               return (
-                <div key={perfume._id} className={`wl-card ${isOut ? "out" : ""}`}>
+                <div
+                  key={perfume._id}
+                  className={`wl-card ${isOut ? "out" : ""}`}
+                >
                   <div className="wl-img-wrap">
-                    {img ? <img src={img} alt={perfume.name} className="wl-img" />
-                         : <div className="wl-img-ph"><Package size={52} strokeWidth={0.6} /></div>}
+                    {img ? (
+                      <img loading="lazy" src={img} alt={perfume.name} className="wl-img" />
+                    ) : (
+                      <div className="wl-img-ph">
+                        <Package size={52} strokeWidth={0.6} />
+                      </div>
+                    )}
                     <div className="wl-overlay">
-                      <button className={`wl-hover-add ${isAdded ? "done" : ""}`} onClick={() => addToCart(perfume)}>
-                        <ShoppingBag size={13} /> {isAdded ? "تمت الإضافة ✓" : "أضف للسلة"}
+                      <button
+                        className={`wl-hover-add ${isAdded ? "done" : ""}`}
+                        onClick={() => addToCart(perfume)}
+                      >
+                        <ShoppingBag size={13} />{" "}
+                        {isAdded ? "تمت الإضافة ✓" : "أضف للسلة"}
                       </button>
                     </div>
-                    {perfume.discount > 0 && <span className="wl-disc">−{perfume.discount}%</span>}
-                    <button className="wl-del" onClick={() => removeFromWishlist(perfume._id)} title="إزالة">
+                    {perfume.discount > 0 && (
+                      <span className="wl-disc">−{perfume.discount}%</span>
+                    )}
+                    <button
+                      className="wl-del"
+                      onClick={() => removeFromWishlist(perfume._id)}
+                      title="إزالة"
+                    >
                       <Trash2 size={12} />
                     </button>
                   </div>
                   <div className="wl-body">
                     <div className="wl-brand-tag">{perfume.brand}</div>
-                    <div className="wl-name" onClick={() => navigate(`/shop/${perfume.slug}/full`)}>{perfume.name}</div>
+                    <div
+                      className="wl-name"
+                      onClick={() => navigate(`/shop/${perfume.slug || perfume._id}/full`)}
+                    >
+                      {perfume.name}
+                    </div>
                     <div className="wl-prices">
                       {orig && <span className="wl-orig">₪{orig}</span>}
-                      <span className="wl-price">{price != null ? `₪${price}` : "—"}</span>
+                      <span className="wl-price">
+                        {price != null ? `₪${price}` : "—"}
+                      </span>
                     </div>
                     <div className="wl-rule" />
-                    <button className={`wl-add-btn ${isAdded ? "done" : ""}`} onClick={() => addToCart(perfume)}>
-                      <ShoppingBag size={13} /> {isAdded ? "تمت الإضافة ✓" : "أضف للسلة"}
+                    <button
+                      className="wl-add-btn"
+                      onClick={() => navigate(`/shop/${perfume.slug || perfume._id}/full`)}
+                    >
+                      <Eye size={13} /> عرض التفاصيل
                     </button>
                   </div>
                 </div>

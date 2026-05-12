@@ -2,24 +2,23 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Search, ArrowLeft, Sparkles } from "lucide-react";
 
-const API = "/api";
+const API = import.meta.env.VITE_API_URL || "/api";;
 
 const BRAND_CATALOGUE = [
-  { name: "Tom Ford",  query: "Tom+Ford",  logo: "https://images.seeklogo.com/logo-png/38/2/tom-ford-logo-png_seeklogo-383930.png", origin: "الولايات المتحدة", type: "نيش / فاخر", year: "2006" },
-  { name: "Xerjoff",   query: "Xerjoff",   logo: "https://vesaura.com/cdn/shop/files/Xerjoff_Logo.png?v=1729180705&width=1500", origin: "إيطاليا", type: "نيش", year: "2003" },
-  { name: "Jean Paul", query: "Jean+Paul", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSjhUV9_E4Cod0wyNN8EMEG0NsFQhUR-1O-_w&s", origin: "فرنسا", type: "مصمم", year: "1976" },
-  { name: "Valentino", query: "Valentino", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTuM-qtpaBSEOid4tieSWJyjgLifmNnDlU1pQ&s", origin: "إيطاليا", type: "مصمم", year: "1978" },
-  { name: "YSL",       query: "YSL",       logo: "https://logoeps.com/wp-content/uploads/2012/10/yves-saint-laurent-logo-vector.png", origin: "فرنسا", type: "مصمم", year: "1964" },
-  { name: "Versace",   query: "Versace",   logo: "https://cdn.worldvectorlogo.com/logos/versace-medusa.svg", origin: "إيطاليا", type: "مصمم", year: "1978" },
-  { name: "Burberry",  query: "Burberry",  logo: "https://static.vecteezy.com/system/resources/thumbnails/014/414/693/small/burberry-old-logo-on-transparent-background-free-vector.jpg", origin: "بريطانيا", type: "مصمم", year: "1856" },
-  { name: "Gucci",     query: "Gucci",     logo: "https://1000logos.net/wp-content/uploads/2017/01/Gucci-Logo.jpg", origin: "إيطاليا", type: "مصمم", year: "1921" },
-  { name: "Chanel",    query: "Chanel",    logo: "https://www.vectorlogo.zone/logos/chanel/chanel-ar21.svg", origin: "فرنسا", type: "فاخر", year: "1910" },
-  { name: "Dior",      query: "Dior",      logo: "https://logos-world.net/wp-content/uploads/2020/12/Dior-Logo.png", origin: "فرنسا", type: "فاخر", year: "1946" },
-  { name: "Armani",    query: "Armani",    logo: "https://1000logos.net/wp-content/uploads/2021/04/Armani-logo.png", origin: "إيطاليا", type: "مصمم", year: "1975" },
-  { name: "Creed",     query: "Creed",     logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Creed_logo.svg/2560px-Creed_logo.svg.png", origin: "فرنسا", type: "نيش / فاخر", year: "1760" },
+  { name: "Tom Ford",  query: "Tom+Ford",  logo: "https://res.cloudinary.com/dsxz0cybq/image/upload/f_auto,q_auto/v1778601223/tom-ford-logo-png_seeklogo-383930_qwwbef.webp", origin: "الولايات المتحدة", type: "نيش", year: "2006" },
+  { name: "Xerjoff",   query: "Xerjoff",   logo: "https://res.cloudinary.com/dsxz0cybq/image/upload/f_auto,q_auto/v1778601288/Xerjoff_Logo_cxrl1i.webp", origin: "إيطاليا", type: "نيش", year: "2003" },
+  { name: "Jean Paul", query: "Jean+Paul", logo: "https://res.cloudinary.com/dsxz0cybq/image/upload/f_auto,q_auto/v1778601494/jean_paul_tka67m.png", origin: "فرنسا", type: "مصمم", year: "1976" },
+  { name: "Valentino", query: "Valentino", logo: "https://res.cloudinary.com/dsxz0cybq/image/upload/f_auto,q_auto/v1778601535/valentino_sytghn.png", origin: "إيطاليا", type: "مصمم", year: "1978" },
+  { name: "YSL",       query: "YSL",       logo: "https://res.cloudinary.com/dsxz0cybq/image/upload/f_auto,q_auto/v1778601632/yves-saint-laurent-logo-vector_csxisk.png", origin: "فرنسا", type: "مصمم", year: "1964" },
+  { name: "Versace",   query: "Versace",   logo: "https://res.cloudinary.com/dsxz0cybq/image/upload/f_auto,q_auto/v1778601738/vercase_gsccja.png", origin: "إيطاليا", type: "مصمم", year: "1978" },
+  { name: "Burberry",  query: "Burberry",  logo: "https://res.cloudinary.com/dsxz0cybq/image/upload/f_auto,q_auto/v1778601791/burberry_ea6ipk.png", origin: "بريطانيا", type: "مصمم", year: "1856" },
+  { name: "Gucci",     query: "Gucci",     logo: "https://res.cloudinary.com/dsxz0cybq/image/upload/f_auto,q_auto/v1778601829/gucci_nlpsxu.png", origin: "إيطاليا", type: "مصمم", year: "1921" },
+  { name: "Chanel",    query: "Chanel",    logo: "https://res.cloudinary.com/dsxz0cybq/image/upload/f_auto,q_auto/v1778602184/chanel_k9abdp.png", origin: "فرنسا", type: "مصمم", year: "1910" },
+  { name: "Armani",    query: "Armani",    logo: "https://res.cloudinary.com/dsxz0cybq/image/upload/f_auto,q_auto/v1778601989/giorgio-armani-logo-png-transparent_h24msy.png", origin: "إيطاليا", type: "مصمم", year: "1975" },
+
 ];
 
-const TYPE_FILTERS = ["الكل", "نيش", "نيش / فاخر", "فاخر", "مصمم"];
+const TYPE_FILTERS = ["الكل", "نيش", "مصمم"];
 
 export default function Brands() {
   const navigate = useNavigate();
@@ -387,7 +386,13 @@ export default function Brands() {
                 onClick={() => navigate(`/brands/${encodeURIComponent(brand.query)}?label=${encodeURIComponent(brand.name)}`)}
               >
                 <div className="bh-logo-zone">
-                  <img src={brand.logo} alt={brand.name} loading="lazy" />
+                  <img
+  src={brand.logo}
+  alt={brand.name}
+  loading="lazy"
+  width="80"
+  height="80"
+/>
                 </div>
                 <div className="bh-card-body">
                   <span className="bh-card-name">{brand.name}</span>

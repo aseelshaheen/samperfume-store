@@ -20,6 +20,7 @@ import Wishlist from "./pages/Wishlist";
 import Brands from "./pages/Brands";
 import BrandPerfumes from "./pages/Brandperfume";
 import ContactUs from "./pages/Contactus";
+import ReturnsPolicy from "./pages/returns";
 
 function NotFound() {
   return (
@@ -122,6 +123,7 @@ function AppInner() {
           <Route path="/brands" element={<Brands />} />
           <Route path="/brands/:brandQuery" element={<BrandPerfumes />} />
           <Route path="/contact" element={<ContactUs />} />
+          <Route path="/returns" element={<ReturnsPolicy />} />
 
           {/* Auth page — redirect to home if already logged in */}
           <Route

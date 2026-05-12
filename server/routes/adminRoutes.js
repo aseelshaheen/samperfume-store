@@ -116,7 +116,7 @@ router.put("/reviews/:reviewId/approve", async (req, res) => {
     try {
       await transporter.sendMail({
         from:    `"متجر العطور" <${process.env.ADMIN_EMAIL}>`,
-        to:      "aseelshaheen080@gmail.com",
+        to:      "samperfume8@gmail.com",
         subject: `✅ تمت الموافقة على تقييم — ${perfume.name}`,
         html: `
           <div dir="rtl" style="font-family:Arial,sans-serif;max-width:600px;margin:auto;border:1px solid #e8e2dc;border-radius:8px;overflow:hidden;">
@@ -164,7 +164,7 @@ router.put("/reviews/:reviewId/reject", async (req, res) => {
     try {
       await transporter.sendMail({
         from:    `"متجر العطور" <${process.env.ADMIN_EMAIL}>`,
-        to:      "aseelshaheen080@gmail.com",
+        to:      "samperfume8@gmail.com",
         subject: `❌ تم رفض تقييم — ${perfume.name}`,
         html: `
           <div dir="rtl" style="font-family:Arial,sans-serif;max-width:600px;margin:auto;border:1px solid #e8e2dc;border-radius:8px;overflow:hidden;">

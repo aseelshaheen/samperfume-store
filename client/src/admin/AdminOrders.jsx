@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Search, Loader2, ShoppingBag, Phone, MapPin, X } from "lucide-react";
 
-const API = "/api";
+const API = import.meta.env.VITE_API_URL || "/api";;
 const authHeaders = () => ({
   "Content-Type": "application/json",
   Authorization: `Bearer ${localStorage.getItem("sp_token")}`,
@@ -113,7 +113,7 @@ function OrderDetail({ order, onClose, onStatusChange }) {
             {order.items?.map((item, i) => (
               <div key={i} className="od-item">
                 {item.image ? (
-                  <img src={item.image} alt="" className="od-item-img" />
+                  <img loading="lazy" src={item.image} alt="" className="od-item-img" />
                 ) : (
                   <div className="od-item-ph">
                     <ShoppingBag size={14} />
